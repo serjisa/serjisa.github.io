@@ -1,26 +1,24 @@
 ---
 layout: about
-title: about
+title: me
 permalink: /
-subtitle: <a href='#'>Affiliations</a>. Address. Contacts. Moto. Etc.
+subtitle: "<br>"
 
 profile:
   align: right
   image: prof_pic.jpg
-  image_circular: false # crops the image to make it circular
-  address: >
-    <p>555 your office number</p>
-    <p>123 your address street</p>
-    <p>Your City, State 12345</p>
+  image_circular: true # crops the image to make it circular
 
-news: true  # includes a list of news items
-latest_posts: true  # includes a list of the newest posts
-selected_papers: true # includes a list of papers marked as "selected={true}"
+news: false  # includes a list of news items
+latest_posts: false  # includes a list of the newest posts
+selected_papers: false # includes a list of papers marked as "selected={true}"
 social: true  # includes social icons at the bottom of the page
 ---
 
-Write your biography here. Tell the world about yourself. Link to your favorite [subreddit](http://reddit.com). You can put a picture in, too. The code is already in, just name your picture `prof_pic.jpg` and put it in the `img/` folder.
+Hi there! I'm Sergey (*Серёжа* in Russian), and I'm currently a PhD student in the [Adameyko group](https://adameykolab.eu) at the Medical University of Vienna. My main passion lies in single-cell genomics and the statistical methods used for its analysis.
 
-Put your address / P.O. box / other info right below your picture. You can also disable any of these elements by editing `profile` property of the YAML header of your `_pages/about.md`. Edit `_bibliography/papers.bib` and Jekyll will render your [publications page](/al-folio/publications/) automatically.
+At the moment, I'm working under the guidance of [Igor Adameyko](https://www.meduniwien.ac.at/hp/phd-neuroscience/research-laboratories/igor-adameyko/) and [Peter Kharchenko](https://altoslabs.com/team/principal-investigators-san-diego/peter-kharchenko/), focusing on developing approaches for the analysis and interpretation of multimodal single-cell omics and lineage barcoding experiments. Beyond that, I as far as possible contribute to the single-cell analysis community (e. g. [Symphonypy](https://github.com/potulabe/symphonypy) package, a port of Symphony for the scverse ecosystem, was created under my supervision).
 
-Link to your social media connections, too. This theme is set up to use [Font Awesome icons](http://fortawesome.github.io/Font-Awesome/) and [Academicons](https://jpswalsh.github.io/academicons/), like the ones below. Add your Facebook, Twitter, LinkedIn, Google Scholar, or just disable all of them.
+During my free time, I indulge in watching contemporary films, attending techno raves, and delving into the world of music production. Please don't hesitate to reach out to me if you'd like to connect or have any questions.
+
+<br>
