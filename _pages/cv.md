@@ -4,5 +4,5 @@ permalink: /cv/
 title: cv
 nav: true
 nav_order: 4
-redirect_to: /assets/pdf/cv.pdf
+redirect_to: https://serjisa.github.io/assets/pdf/cv.pdf)https://serjisa.github.io/assets/pdf/cv.pdf
 ---
