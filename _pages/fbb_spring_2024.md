@@ -13,7 +13,7 @@ permalink: /fbb.msu.2024/
 |-|-|-|-|-|
 |21.02|Экспериментальная процедура bulk RNA-Seq|[Ссылка](https://docs.google.com/presentation/d/1PyPVy2jyY_x2UiCU6pOpYv7nH0Q8xmotHK1E8VkYACo/edit?usp=sharing)||[Ссылка](https://www.youtube.com/watch?v=CDrHh2BFB5k)|
 |28.02|Выравнивания и псевдовыравнивания|[Ссылка](https://docs.google.com/presentation/d/1iQQOGIyirT9STQAqK_aIJKPTBXK-zk-IluZ91i_uzFs/edit?usp=sharing)|[Ссылка](https://colab.research.google.com/drive/1FsovdBxy11x1NK9WMuguSEYuFVva2sWL?usp=sharing)|[Ссылка](https://www.youtube.com/watch?v=mZo75tbcRv4)|
-|06.03|Распределения в омиксных данных|[Ссылка]()|[Ссылка]()|[Ссылка]()|
+|06.03|Распределения в омиксных данных|[Ссылка](https://drive.google.com/file/d/17MliZgooAb-flv88Q-agLiTgae6YSSTn/view?usp=sharing)||[Ссылка](https://www.youtube.com/watch?v=f27Jw6z6Rmg)|
 |13.03|Дифференциальная экспрессия в bulk RNA-Seq|[Ссылка]()|[Ссылка]()|[Ссылка]()|
 |20.03|Экспериментальная процедура scRNA-Seq|[Ссылка]()||[Ссылка]()|
 |27.03|Экосистема scverse и контроль качества клеток|[Ссылка]()|[Ссылка]()|[Ссылка]()|
