@@ -15,7 +15,7 @@ permalink: /fbb.msu.2024/
 |28.02|Выравнивания и псевдовыравнивания|[Ссылка](https://docs.google.com/presentation/d/1iQQOGIyirT9STQAqK_aIJKPTBXK-zk-IluZ91i_uzFs/edit?usp=sharing)|[Ссылка](https://colab.research.google.com/drive/1FsovdBxy11x1NK9WMuguSEYuFVva2sWL?usp=sharing)|[Ссылка](https://www.youtube.com/watch?v=mZo75tbcRv4)|
 |06.03|Распределения в омиксных данных|[Ссылка](https://drive.google.com/file/d/17MliZgooAb-flv88Q-agLiTgae6YSSTn/view?usp=sharing)||[Ссылка](https://www.youtube.com/watch?v=f27Jw6z6Rmg)|
 |13.03|Дифференциальная экспрессия в bulk RNA-Seq|[Ссылка](https://drive.google.com/file/d/14eQnFgeaeqLZ0YFXkcEmYmvTeHyTlXhc/view?usp=share_link)|[Ссылка](https://colab.research.google.com/drive/1WOfH664uXmfORzpjyttnCc-wOfTEhYqU?usp=sharing)|[Ссылка](https://www.youtube.com/watch?v=f1N7CRc_zCE)|
-|20.03|Экспериментальная процедура scRNA-Seq|[Ссылка](https://www.youtube.com/watch?v=mrMMp0WuTT0)||[Ссылка](https://docs.google.com/presentation/d/1GYV1-DWvmILUZIRNUeHN2PhJLXcMcZQH3UZ1FZ32xkw/edit?usp=sharing)|
+|20.03|Экспериментальная процедура scRNA-Seq|[Ссылка](https://docs.google.com/presentation/d/1GYV1-DWvmILUZIRNUeHN2PhJLXcMcZQH3UZ1FZ32xkw/edit?usp=sharing)||[Ссылка](https://www.youtube.com/watch?v=mrMMp0WuTT0)|
 |27.03|Экосистема scverse и контроль качества клеток|[Ссылка]()|[Ссылка]()|[Ссылка]()|
 |03.04|Контроль за дисперсией и методы снижения размерности|[Ссылка]()|[Ссылка]()|[Ссылка]()|
 |10.04|Функциональный анализ и определение типов клеток|[Ссылка]()|[Ссылка]()|[Ссылка]()|
