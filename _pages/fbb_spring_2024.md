@@ -18,8 +18,8 @@ permalink: /fbb.msu.2024/
 |20.03|Экспериментальная процедура scRNA-Seq|[Ссылка](https://docs.google.com/presentation/d/1GYV1-DWvmILUZIRNUeHN2PhJLXcMcZQH3UZ1FZ32xkw/edit?usp=sharing)||[Ссылка](https://www.youtube.com/watch?v=mrMMp0WuTT0)|
 |27.03|Экосистема scverse и контроль качества клеток|[Ссылка](https://docs.google.com/presentation/d/1BPHp-OC7PXvtEtg6eynebXoLusgdKkSKxij2XHfC99k/edit?usp=sharing)|[Ссылка](https://colab.research.google.com/drive/1lQ5GghmD5MekE1p03jrIn5lfxLFk0jI9?usp=sharing)|[Ссылка](https://www.youtube.com/watch?v=7B9N0rdjBTo)|
 |03.04|Контроль за дисперсией и методы снижения размерности|[Ссылка]()|[Ссылка]()|[Ссылка]()|
-|10.04|Функциональный анализ и определение типов клеток|[Ссылка]()|[Ссылка]()|[Ссылка]()|
-|17.04|Вариационные автоэнкодеры|[Ссылка]()|[Ссылка]()|[Ссылка]()|
+|10.04|Вариационные автоэнкодеры|[Ссылка]()|[Ссылка]()|[Ссылка]()|
+|17.04|Функциональный анализ и определение типов клеток|[Ссылка]()|[Ссылка]()|[Ссылка]()|
 |24.04|Анализ траекторий дифференцировки|[Ссылка]()|[Ссылка]()|[Ссылка]()|
 
 <br>
