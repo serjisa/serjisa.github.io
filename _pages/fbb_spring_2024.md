@@ -17,7 +17,8 @@ permalink: /fbb.msu.2024/
 |13.03|Дифференциальная экспрессия в bulk RNA-Seq|[Ссылка](https://drive.google.com/file/d/14eQnFgeaeqLZ0YFXkcEmYmvTeHyTlXhc/view?usp=share_link)|[Ссылка](https://colab.research.google.com/drive/1WOfH664uXmfORzpjyttnCc-wOfTEhYqU?usp=sharing)|[Ссылка](https://www.youtube.com/watch?v=f1N7CRc_zCE)|
 |20.03|Экспериментальная процедура scRNA-Seq|[Ссылка](https://docs.google.com/presentation/d/1GYV1-DWvmILUZIRNUeHN2PhJLXcMcZQH3UZ1FZ32xkw/edit?usp=sharing)||[Ссылка](https://www.youtube.com/watch?v=mrMMp0WuTT0)|
 |27.03|Экосистема scverse и контроль качества клеток|[Ссылка](https://docs.google.com/presentation/d/1BPHp-OC7PXvtEtg6eynebXoLusgdKkSKxij2XHfC99k/edit?usp=sharing)|[Ссылка](https://colab.research.google.com/drive/1lQ5GghmD5MekE1p03jrIn5lfxLFk0jI9?usp=sharing)|[Ссылка](https://www.youtube.com/watch?v=7B9N0rdjBTo)|
-|03.04|Контроль за дисперсией и методы снижения размерности|[Ссылка]()|[Ссылка]()|[Ссылка]()|
+|03.04|Контроль за дисперсией и методы снижения размерности (лекция)|[Ссылка](https://docs.google.com/presentation/d/1cOjaOzdv2yFs1NseCBJK06K7FeW1Lp7ZuWDlfIDkIcY/edit?usp=sharing)||[Ссылка](https://www.youtube.com/watch?v=C_UWAL9T6FE)|
+|05.04|Контроль за дисперсией и методы снижения размерности (семинар)||[Ссылка]()|[Ссылка]()|
 |10.04|Вариационные автоэнкодеры|[Ссылка]()|[Ссылка]()|[Ссылка]()|
 |17.04|Функциональный анализ и определение типов клеток|[Ссылка]()|[Ссылка]()|[Ссылка]()|
 |24.04|Анализ траекторий дифференцировки|[Ссылка]()|[Ссылка]()|[Ссылка]()|
