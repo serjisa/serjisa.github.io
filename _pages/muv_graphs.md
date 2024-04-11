@@ -23,4 +23,4 @@ And here are additional materials that might be useful to understand the topic:
 10. [Wavelets](https://www.youtube.com/watch?v=jnxqHcObNK4) (video) — *from Fourier transform to wavelets*
 11. [Graph Fourier transform](https://matthewhirn.files.wordpress.com/2021/02/cmse890_spring2021_lecture12.pdf) (lecture note) — *introduction to graphs signal processing*
 12. [The Emerging Field of Signal Processing on Graphs](https://arxiv.org/pdf/1211.0053.pdf) (paper) — *main tricks with graph fourier transform*
-13. [https://www.nature.com/articles/s42003-023-04474-1](https://www.nature.com/articles/s42003-023-04474-1) (paper) — *graph harmonics and connectomics together*
+13. [Distributed harmonic patterns of structure-function dependence orchestrate human consciousness](https://www.nature.com/articles/s42003-023-04474-1) (paper) — *graph harmonics and connectomics together*
