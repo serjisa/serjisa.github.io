@@ -7,8 +7,8 @@ permalink: /muv.graphs/
 Medical University of Vienna, Center for Brain Research (Apr 11th 2024)
 
 Here are the materials from the lecture:
-1. [Google Slides](https://docs.google.com/presentation/d/1qRprheu32Q7HcP47b_CoCRuJFEzRNRXdBBBfSTIEVaQ/edit?usp=sharing)
-2. [Google Colab](https://colab.research.google.com/drive/1Mc-rjOOvkxzje6HrCta3Mj8akHAf0SxI?usp=sharing)
+1. [**Google Slides**](https://docs.google.com/presentation/d/1qRprheu32Q7HcP47b_CoCRuJFEzRNRXdBBBfSTIEVaQ/edit?usp=sharing)
+2. [**Google Colab**](https://colab.research.google.com/drive/1Mc-rjOOvkxzje6HrCta3Mj8akHAf0SxI?usp=sharing)
 
 And here are additional materials that might be useful to understand the topic:
 1. [Spectral and Algebraic Graph Theory](http://cs-www.cs.yale.edu/homes/spielman/sagt/sagt.pdf) by Daniel A. Spielman (textbook) — *introduction to the topic, might be too much*
