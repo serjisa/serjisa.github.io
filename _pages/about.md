@@ -2,7 +2,7 @@
 layout: about
 title: me
 permalink: /
-subtitle: "<i>Bioinformatics Scientist</i>"
+subtitle: "<i>Computational Biologist</i>"
 
 profile:
   align: right
