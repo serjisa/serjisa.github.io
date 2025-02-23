@@ -2,7 +2,7 @@
 layout: about
 title: me
 permalink: /
-subtitle: "<br>"
+subtitle: "<i>Bioinformatics Scientist</i>"
 
 profile:
   align: right
@@ -17,10 +17,28 @@ social: true  # includes social icons at the bottom of the page
 
 Hi there! I'm Sergey (*Серёжа* in Russian), and I'm currently a PhD student in the [Adameyko group](https://adameykolab.eu) at the Medical University of Vienna. My main passion lies in single-cell genomics and the statistical methods used for its analysis. In 2021, I graduated from the Faculty of Bioengineering and Bioinformatics of Moscow State University and also have industrial experience working at [BostonGene](https://bostongene.com) company.
 
-At the moment, I'm working under the guidance of [Igor Adameyko](https://www.meduniwien.ac.at/web/studium-weiterbildung/phd-und-doktoratsstudien/phd-studium/phd-thematische-programme/neuroscience/ueber-das-programm/supervisorinnen/igor-adameyko/) and [Peter Kharchenko](https://altoslabs.com/team/principal-investigators-san-diego/peter-kharchenko/), focusing on developing approaches for the analysis and interpretation of multimodal single-cell omics and lineage barcoding experiments. Beyond that, I as far as possible contribute to the single-cell analysis community. For example, the following packages were developed with the major input from my side:
-* [Symphonypy](https://symphonypy.readthedocs.io) — Python port of the Symphony label transfer algorithm,
-* [scLiTr](https://sclitr.readthedocs.io/en/latest/) — package for clonal embeddings construction.
+At the moment, I'm working under the guidance of [Igor Adameyko](https://www.meduniwien.ac.at/web/studium-weiterbildung/phd-und-doktoratsstudien/phd-studium/phd-thematische-programme/neuroscience/ueber-das-programm/supervisorinnen/igor-adameyko/) and [Peter Kharchenko](https://altoslabs.com/team/principal-investigators-san-diego/peter-kharchenko/), focusing on developing approaches for the analysis and interpretation of multimodal single-cell omics and lineage barcoding experiments. Beyond that, I as far as possible contribute to the single-cell analysis community. During my free time, I like watching films and just partying with my lovely friends.
 
-During my free time, I like watching films and just partying with my lovely friends. Please don't hesitate to reach out to me if you'd like to connect or have any questions.
+Some of the open source libraries that were developed with the major input from my side:
+
+<div class="projects">
+{% assign sorted_projects = site.projects | sort: "importance" %}
+{% if page.horizontal %}
+  <div class="container">
+    <div class="row row-cols-1 row-cols-md-2" style="row-gap: 25px">
+    {% for project in sorted_projects %}
+      {% include projects_horizontal.liquid %}
+    {% endfor %}
+    </div>
+  </div>
+  {% else %}
+  <div class="row row-cols-1 row-cols-md-3" style="row-gap: 25px">
+    {% for project in sorted_projects %}
+      {% include projects.liquid %}
+    {% endfor %}
+  </div>
+  {% endif %}
+</div>
 
 <br>
+To see the full list of my publications, please visit my [Google Scholar](https://scholar.google.com/citations?user=fZlONS4AAAAJ) or check my [cv](cv).
