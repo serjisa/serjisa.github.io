@@ -4,5 +4,5 @@ permalink: /cv/
 title: cv
 nav: true
 nav_order: 4
-redirect_to: https://cv.isaev.cc/
+redirect_to: https://isaev.cc/assets/pdf/cv.pdf
 ---
