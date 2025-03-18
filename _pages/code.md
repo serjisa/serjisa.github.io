@@ -1,6 +1,6 @@
 ---
 layout: default
-permalink: /scholar/
+permalink: /github/
 title: code
 nav: true
 nav_order: 2
