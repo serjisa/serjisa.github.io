@@ -12,6 +12,7 @@ layout: default
         </header>
 
         <article>
+        <div class="centered-about">
           {% if page.profile -%}
           <div class="profile float-{%- if page.profile.align == 'left' -%}left{%- else -%}right{%- endif -%}">
             {%- if page.profile.image %}
@@ -72,6 +73,7 @@ layout: default
 
             </div>
           {%- endif %}
+        </div>
         </article>
 
 </div>
