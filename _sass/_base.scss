@@ -119,6 +119,12 @@ blockquote {
 
 // Profile
 
+.centered-about {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
 .profile {
   width: 100%;
 
@@ -1039,4 +1045,11 @@ nav[data-toggle="toc"] {
     margin-bottom: 0;
     padding-top: 0.5rem;
   }
+}
+
+.page-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
 }
