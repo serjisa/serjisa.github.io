@@ -122,7 +122,10 @@ blockquote {
 .centered-about {
   display: flex;
   align-items: center;
-  min-height: 80hv;
+  min-height: 100vh;
+  margin: 0;
+  padding: 0;
+  overflow-x: hidden;
 }
 
 .profile {
