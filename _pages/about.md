@@ -6,7 +6,7 @@ subtitle: "<i>Computational Biologist</i>"
 
 profile:
   align: right
-  image: prof_pic_2.png
+  image: prof_pic_zoomed.png
   image_circular: true # crops the image to make it circular
 
 news: false  # includes a list of news items
