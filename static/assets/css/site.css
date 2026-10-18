@@ -17,7 +17,6 @@
   --font: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
   --mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
   --wide: 56rem;              /* width of header and content */
-  --text: 46rem;              /* max line length of running text */
   --gutter: clamp(1.25rem, 5vw, 2rem);
   --footer-h: 1.9rem;
   /* highlight band behind a hovered link: as tall as lowercase letters, not the whole line */
@@ -108,7 +107,6 @@ a:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 .bottom p { margin: 0; line-height: 1; text-box: trim-both cap alphabetic; }   /* optically centred */
 
 /* ---------- text pages ---------- */
-.inner > p, .inner > ol:not(.pubs), .inner > blockquote { max-width: var(--text); }
 h1, h2, h3, h4 { line-height: 1.2; letter-spacing: -0.015em; text-wrap: balance; }
 h1 { font-size: clamp(1.9rem, 4.5vw, 2.5rem); font-weight: 700; letter-spacing: -0.03em; margin: 1.5rem 0 0.75rem; }
 h1 strong { font-weight: inherit; }
@@ -135,7 +133,7 @@ pre { overflow-x: auto; padding: 1rem; background: color-mix(in srgb, var(--ink)
 pre code { background: none; padding: 0; }
 
 /* ---------- tables (course schedules) ---------- */
-.table-wrap { overflow-x: auto; margin: 0 0 1.5rem -0.2em; padding: 0.2em; -webkit-overflow-scrolling: touch; }
+.table-wrap { overflow-x: auto; margin: 0 -0.2em 1.5rem; padding: 0.2em; -webkit-overflow-scrolling: touch; }
 table { border-collapse: collapse; font-size: 0.95rem; min-width: 100%; }
 th, td { text-align: left; vertical-align: top; padding: 0.55rem 1.25rem 0.55rem 0; border-bottom: 1px solid var(--rule); }
 th { font-weight: 600; color: var(--muted); font-size: 0.85rem; border-bottom-color: var(--ink); white-space: nowrap; }
@@ -207,7 +205,6 @@ body.home .inner > p { max-width: none; line-height: 1.7; }
 .pub { display: grid; grid-template-columns: 3.5rem minmax(0, 1fr); gap: 0 1rem; padding: 0.9rem 0; margin: 0; }
 .pub + .pub { margin-top: 0; }
 .pub.new-year { border-top: 1px solid var(--rule); }
-.pub > div { max-width: var(--text); }
 .pub p { margin: 0; }
 .pub-year { color: var(--muted); font-variant-numeric: tabular-nums; font-size: 0.95rem; padding-top: 0.1rem; }
 .pub-title { font-weight: 550; line-height: 1.4; }
@@ -232,7 +229,7 @@ body.home .inner > p { max-width: none; line-height: 1.7; }
 .sw-name { display: flex; justify-content: space-between; align-items: baseline; gap: 1rem; }
 .sw-name code { font-size: 1rem; background: none; padding: 0; font-weight: 600; }
 .sw-years { color: var(--muted); font-size: 0.95rem; font-variant-numeric: tabular-nums; }
-.sw-desc { max-width: var(--text); margin-top: 0.25rem !important; }
+.sw-desc { margin-top: 0.25rem !important; }
 .sw-links { display: flex; flex-wrap: wrap; gap: 0.25rem 1rem; margin-top: 0.4rem !important; font-size: 0.95rem; }
 
 /* ---------- touch screens: invisible ~44 px tap areas around small links ---------- */
