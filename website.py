@@ -511,7 +511,7 @@ def render_page(meta, body, data, template, updated):
     shortcodes = {key: partial(func, data) for key, func in SHORTCODES.items()}
     values = {
         "lang": esc(meta.get("lang") or site.get("lang") or "en"),
-        "title": esc(name if permalink == "/" or not title else "%s — %s" % (title, name)),
+        "title": esc(name if permalink == "/" or not title else "%s | %s" % (str(title)[:1].upper() + str(title)[1:], name)),
         "description": esc(meta.get("description") or site.get("description")),
         "url": esc(base + permalink),
         "image": esc(base + str(site.get("photo", ""))),

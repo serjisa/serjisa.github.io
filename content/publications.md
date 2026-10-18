@@ -1,6 +1,6 @@
 ---
 title: publications
-description: Publications by Sergey Isaev on single-cell genomics, lineage tracing and beyond.
+description: Publications by Sergey Isaev on single-cell genomics, lineage tracing and beyond
 ---
 
 # selected publications

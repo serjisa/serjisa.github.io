@@ -5,7 +5,7 @@ first_name: Sergey
 last_name: Isaev
 url: https://isaev.cc
 lang: en
-description: Sergey Isaev — computational biologist working on single-cell genomics and lineage tracing at the Medical University of Vienna.
+description: Sergey Isaev — computational biologist working on single-cell genomics and lineage tracing at the Medical University of Vienna
 photo: /assets/img/portrait.webp   # square image in static/assets/img/
 
 # How your name is written in author lists (these get highlighted on the publications list)

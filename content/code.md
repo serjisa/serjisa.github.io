@@ -1,6 +1,6 @@
 ---
 title: code
-description: Open-source software by Sergey Isaev for single-cell and lineage tracing analysis.
+description: Open-source software by Sergey Isaev for single-cell and lineage tracing analysis
 ---
 
 # code
