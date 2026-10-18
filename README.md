@@ -6,14 +6,14 @@ on GitHub, and the site at [isaev.cc](https://isaev.cc) updates by itself about 
 ## Editing on GitHub
 
 - **Change a file:** open it on github.com → pencil icon (*Edit this file*) → make the change →
-  *Commit changes…* → *Commit changes* (straight to `master`).
+  *Commit changes…* → *Commit changes* (straight to `main`).
 - **Add or replace a file** (PDF, photo, icon): open the folder → *Add file* → *Upload files* →
   *Commit changes*. A file with the same name replaces the old one.
 - **Check that it went live:** *Actions* tab → *deploy*. A green tick means the site is updated
   (give the browser a refresh). A red cross means the build failed; open it to see the error,
   which is almost always a typo in a `.yml` file. The live site stays as it was until a build succeeds.
 
-Every commit to `master` triggers the update, whatever file it touches.
+Every commit to `main` triggers the update, whatever file it touches.
 
 ## What is where
 
