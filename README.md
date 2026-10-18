@@ -28,7 +28,7 @@ Every commit to `main` triggers the update, whatever file it touches.
 | CV | upload a new `static/assets/pdf/cv.pdf` |
 | Photo | upload a new `static/assets/img/portrait.webp` (square) |
 | Contact icons | `static/assets/icons/*.svg` |
-| Site logo in the browser tab | `static/favicon.svg`, plus PNG copies `static/favicon-32.png` and `static/apple-touch-icon.png` (180 px, for Safari / iPhone home screen) |
+| Site logo in the browser tab | `static/favicon.svg`, plus copies `static/favicon.ico`, `static/favicon-32.png` and `static/apple-touch-icon.png` (180 px, for Safari / iPhone home screen) |
 | Colours, sizes, spacing | `static/assets/css/site.css` (colours are the variables at the top) |
 | Page shell: `<head>`, menu, footer | `templates/base.html` |
 
