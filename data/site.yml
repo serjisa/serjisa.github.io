@@ -1,0 +1,45 @@
+# Site-wide settings. Plain YAML: "key: value", lists start with "- ".
+# Put a value in quotes if it contains " #" or starts with a special character.
+
+first_name: Sergey
+last_name: Isaev
+url: https://isaev.cc
+lang: en
+description: Sergey Isaev — computational biologist working on single-cell genomics and lineage tracing at the Medical University of Vienna.
+photo: /assets/img/portrait.webp   # square image in static/assets/img/
+
+# How your name is written in author lists (these get highlighted on the publications list)
+author_names:
+  - Sergey Isaev
+  - Sergey V Isaev
+
+# Top menu
+nav:
+  - label: publications
+    url: /publications/
+  - label: code
+    url: /code/
+  - label: cv
+    url: /assets/pdf/cv.pdf
+
+# Contact icons under your name. `icon` is a file in static/assets/icons/ (without .svg);
+# any single-colour SVG works (these are Tabler outline icons).
+links:
+  - label: Email
+    icon: email
+    url: mailto:sergey@isaev.cc
+  - label: GitHub
+    icon: github
+    url: https://github.com/serjisa
+  - label: Google Scholar
+    icon: scholar
+    url: https://scholar.google.com/citations?user=fZlONS4AAAAJ&hl=en
+  - label: LinkedIn
+    icon: linkedin
+    url: https://www.linkedin.com/in/sergisaev
+  - label: Telegram
+    icon: telegram
+    url: https://t.me/sergisa
+  - label: Twitter
+    icon: twitter
+    url: https://twitter.com/sv_isaev

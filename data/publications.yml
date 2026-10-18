@@ -1,0 +1,66 @@
+# Shown on /publications/, newest first. To add a paper: copy a block to the top and edit it.
+#   title, authors, venue, year   required
+#   url    link of the title (use the DOI: https://doi.org/...)
+#   type   small grey tag, e.g. preprint / review
+#   note   small grey remark, e.g. "* equal contribution" (quote it: it starts with * or †)
+#   pdf    file name in data/papers/; adds a PDF icon. Only for open-access papers and preprints.
+
+- title: Clonal embeddings allow exploratory analysis of lineage-resolved single-cell data
+  authors: Sergey Isaev, Alek G Erickson, Igor Adameyko, et al.
+  venue: bioRxiv
+  year: 2026
+  url: https://doi.org/10.64898/2026.04.30.720820
+  type: preprint
+  pdf: 2026.04.30.720820v1.full.pdf
+
+- title: Clonal analysis for understanding fate biases in developing embryos
+  authors: Sergey Isaev†, Igor Adameyko†
+  venue: Current Opinion in Genetics & Development 99, 102475
+  year: 2026
+  url: https://doi.org/10.1016/j.gde.2026.102475
+  type: review
+  note: "† co-corresponding"
+  pdf: 1-s2.0-S0959437X26000420-main.pdf
+
+- title: Cortical development dynamics across autism spectrum disorder mouse models
+  authors: Lena A Schwarz, Christoph P Dotter, Sergey Isaev, et al.
+  venue: Nature
+  year: 2026
+  url: https://doi.org/10.1038/s41586-026-10679-1
+  pdf: s41586-026-10679-1.pdf
+
+- title: Mesenchymal thymic niche cells enable regeneration of the adult thymus and T cell immunity
+  authors: Karin Gustafsson, Sergey Isaev, Kamdin Mirsanaye, et al.
+  venue: Nature Biotechnology
+  year: 2025
+  url: https://doi.org/10.1038/s41587-025-02864-w
+
+- title: Unbiased profiling of multipotency landscapes reveals spatial modulators of clonal fate biases
+  authors: Alek G Erickson*, Sergey Isaev*, Jingyan He, et al.
+  venue: bioRxiv
+  year: 2024
+  url: https://doi.org/10.1101/2024.11.15.623687
+  type: preprint
+  pdf: 2024.11.15.623687v4.full.pdf
+  note: "* equal contribution"
+
+- title: Multi-omic profiling of follicular lymphoma reveals changes in tissue architecture and enhanced stromal remodeling in high-risk patients
+  authors: Andrea J Radtke*, Ekaterina Postovalova*, Arina Varlamova, …, Sergey Isaev, et al.
+  venue: Cancer Cell 42 (3), 444–463
+  year: 2024
+  url: https://doi.org/10.1016/j.ccell.2024.02.001
+  note: "* equal contribution"
+
+- title: Multiregional single-cell proteogenomic analysis of ccRCC reveals cytokine drivers of intratumor spatial heterogeneity
+  authors: Natalia Miheecheva, Ekaterina Postovalova, Yang Lyu, …, Sergey Isaev, et al.
+  venue: Cell Reports 40 (7)
+  year: 2022
+  url: https://doi.org/10.1016/j.celrep.2022.111180
+  pdf: PIIS2211124722009937.pdf
+
+- title: "Dicyemida and Orthonectida: two stories of body plan simplification"
+  authors: Oleg A Zverkov, Kirill V Mikhailov, Sergey V Isaev, et al.
+  venue: Frontiers in Genetics 10, 443
+  year: 2019
+  url: https://doi.org/10.3389/fgene.2019.00443
+  pdf: fgene-10-00443.pdf

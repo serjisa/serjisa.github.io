@@ -1,0 +1,32 @@
+# Shown on /code/. Fields: name, url (link of the name), years, description (Markdown allowed),
+# links (optional list of label + url, shown under the description).
+
+- name: clone2vec
+  url: https://github.com/kharchenkolab/clone2vec
+  years: 2023–now
+  description: Python package for single-cell lineage tracing analysis. Builds clonal embeddings, so clones can be explored the way cells usually are. Formerly scLiTr
+  links:
+    - label: Docs
+      url: https://clone2vec.readthedocs.io
+    - label: PyPI
+      url: https://pypi.org/project/clone2vec/
+
+- name: py-fastglmpca
+  url: https://github.com/serjisa/py-fastglmpca
+  years: 2025
+  description: PyTorch implementation of the fastglmpca algorithm (Poisson GLM-PCA) for fast dimensionality reduction of count data
+  links:
+    - label: PyPI
+      url: https://pypi.org/project/fastglmpca/
+    - label: Tutorial
+      url: https://clone2vec.readthedocs.io/en/stable/Fast_clonal_embeddings.html
+
+- name: symphonypy
+  url: https://github.com/potulabe/symphonypy
+  years: 2022
+  description: Python port of the Symphony algorithm for mapping single-cell data onto reference atlases
+  links:
+    - label: Docs
+      url: https://symphonypy.readthedocs.io
+    - label: PyPI
+      url: https://pypi.org/project/symphonypy/

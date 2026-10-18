@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="{{ lang }}">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{{ title }}</title>
+  <meta name="description" content="{{ description }}">
+  <link rel="canonical" href="{{ url }}">
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="{{ title }}">
+  <meta property="og:description" content="{{ description }}">
+  <meta property="og:url" content="{{ url }}">
+  <meta property="og:image" content="{{ image }}">
+  <meta name="color-scheme" content="light dark">
+  <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#1c1c1d" media="(prefers-color-scheme: dark)">
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="/assets/css/site.css?v={{ version }}">
+</head>
+<body class="{{ body_class }}">
+  <a class="skip" href="#main">Skip to content</a>
+  <header class="top">
+    <a class="brand" href="/">{{ brand }}</a>
+    <nav aria-label="Main">
+      {{ nav }}
+    </nav>
+  </header>
+  <main id="main"><div class="inner">
+{{ content }}
+  </div></main>
+  <footer class="bottom">
+    <p>© {{ year }} {{ name }}. Updated <time datetime="{{ updated_iso }}">{{ updated }}</time>.</p>
+  </footer>
+</body>
+</html>
