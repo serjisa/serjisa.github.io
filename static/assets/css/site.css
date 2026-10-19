@@ -169,14 +169,11 @@ body.home .inner > p { max-width: none; line-height: 1.7; }
   width: 15rem;
   aspect-ratio: 1;
   margin: 0.25rem 0 1rem 2.5rem;
-  border-radius: 50%;
   object-fit: cover;
-  shape-outside: circle(50%);   /* text follows the curve of the photo */
-  shape-margin: 1.25rem;
-  box-shadow: 0 14px 32px -14px rgba(20, 30, 40, 0.45);
+  box-shadow: 0 8px 16px -6px rgba(20, 30, 40, 0.7);
 }
 @media (prefers-color-scheme: dark) {
-  .portrait { box-shadow: 0 14px 32px -12px rgba(0, 0, 0, 0.85); }
+  .portrait { box-shadow: 0 8px 16px -5px rgba(0, 0, 0, 1); }
 }
 
 /* shorter laptop screens: everything is in rem, so scaling the root shrinks the page uniformly
@@ -195,7 +192,7 @@ body.home .inner > p { max-width: none; line-height: 1.7; }
   body.home .inner > p { line-height: 1.65; }
   .hero { display: flex; flex-direction: column; align-items: center; }
   .name { font-size: 2.6rem; }
-  .portrait { order: -1; float: none; width: 12rem; margin: 0 0 1.75rem; shape-outside: none; }
+  .portrait { order: -1; float: none; width: 12rem; margin: 0 0 1.75rem; }
   .links { gap: 0.4rem 0.2rem; margin-bottom: 1.5rem; }
   .id .links { margin-left: -1rem; margin-right: -1rem; }   /* icons spread a little beyond the name */
 }
