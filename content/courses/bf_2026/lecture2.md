@@ -230,4 +230,3 @@ In plate-based protocols each cell sits in its own well, which makes different l
 - [10x Genomics: intronic and antisense reads in single-cell data](https://cdn.10xgenomics.com/image/upload/v1660261286/support-documents/CG000376_TechNote_Antisense_Intronic_Reads_SingleCellGeneExpression_RevA.pdf)
 - [Chamberlin et al., 2024 — molecular sampling in single-cell vs single-nucleus RNA-seq](https://pmc.ncbi.nlm.nih.gov/articles/PMC10984380)
 - [10x Genomics: Chromium Single Cell 3′ v3.1 (Dual Index) user guide](https://ostr.ccr.cancer.gov/wp-content/uploads/2023/06/CG000315_ChromiumNextGEMSingleCell3-_GeneExpression_v3.1_DualIndex__RevE.pdf)
-- 
