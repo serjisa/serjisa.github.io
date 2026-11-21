@@ -1,0 +1,192 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Lecture 6 | Sergey Isaev</title>
+  <meta name="description" content="Sergey Isaev — computational biologist working on single-cell genomics and lineage tracing at the Medical University of Vienna">
+  <link rel="canonical" href="https://isaev.cc/bf.msu.2026/lecture6/">
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="Lecture 6 | Sergey Isaev">
+  <meta property="og:description" content="Sergey Isaev — computational biologist working on single-cell genomics and lineage tracing at the Medical University of Vienna">
+  <meta property="og:url" content="https://isaev.cc/bf.msu.2026/lecture6/">
+  <meta property="og:image" content="https://isaev.cc/assets/img/portrait.webp">
+  <meta name="color-scheme" content="light dark">
+  <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#1c1c1d" media="(prefers-color-scheme: dark)">
+  <link rel="icon" href="/favicon-32.png" sizes="32x32" type="image/png">
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+  <link rel="stylesheet" href="/assets/css/site.css?v=1795261217">
+</head>
+<body class="page">
+  <a class="skip" href="#main">Skip to content</a>
+  <header class="top">
+    <a class="brand" href="/">sergey <b>isaev</b></a>
+    <nav aria-label="Main">
+      <a href="/publications/">publications</a>
+      <a href="/code/">code</a>
+      <a href="/assets/pdf/cv.pdf">cv</a>
+    </nav>
+  </header>
+  <main id="main"><div class="inner">
+<h1>Lecture 6. Visualizing single-cell data: PCA space, t-SNE and UMAP</h1>
+<p>Lecture 5 ended with the standard recipe: normalize, log-transform, scale, PCA. This lecture is about what comes next: how to use the PCA representation, and how to look at it with two-dimensional visualizations (t-SNE, UMAP) — what they show and, more importantly, what they don't. The practical part runs the full pipeline in scanpy, from QC to UMAP, on a PBMC dataset from three donors.</p>
+<h2 id="1-the-working-matrix-pca-space">1. The working matrix: PCA space</h2>
+<p>After normalization, log transform and PCA, each cell is described by ~20–50 principal components (<code>adata.obsm[&quot;X_pca&quot;]</code>). This is the <strong>"good" matrix</strong>, and the one to use for downstream analysis: clustering, trajectory inference, and any statistic you want to compute on cell similarity.</p>
+<ul>
+<li>Distances between cells in PC space approximate distances in log-normalized expression space, restricted to the directions where the data really vary.</li>
+<li>The discarded components contain mostly noise, so PC space is both smaller and cleaner than the full gene space.</li>
+</ul>
+<p><strong>How many PCs.</strong> As discussed in Lecture 5, cell states vary along far fewer directions than there are genes: typically fewer than ~20–30. So the exact number of PCs matters little. Results with 20, 30 or 50 PCs (or even all genes) look nearly the same. Too few (e.g., 5) is a problem: genuinely different subpopulations merge. Formal procedures for choosing the number of PCs (elbow plots and the like) rarely change conclusions; a value in the 20–50 range is standard.</p>
+<h2 id="2-why-visualize-and-the-problem-with-30-dimensions">2. Why visualize, and the problem with 30 dimensions</h2>
+<p>Clustering and other analyses can run in 30 dimensions without ever being visualized. But looking at data matters. The human brain is very good at spotting patterns (sometimes too good, seeing patterns that aren't there).</p>
+<ul>
+<li>A useful rule when developing a method or testing an idea: find a visualization in which the effect should be visible. If you cannot see it by eye, it is quite likely not there. The converse does not hold: seeing a pattern doesn't prove it is real.</li>
+<li>Visualization is a tool for generating hypotheses, which you then test rigorously. "It looks like this on the plot" is not an argument in a paper.</li>
+</ul>
+<p>The problem is that we can think in three, at most four, dimensions, not thirty. Plotting just PC1 vs PC2 often hides structure: clusters that are well separated in 5 or 30 dimensions can overlap in two linear dimensions. So we need non-linear methods that compress the 30-dimensional space into 2D while keeping the properties we care about most.</p>
+<h2 id="3-manifolds-and-neighbour-preserving-embeddings">3. Manifolds and neighbour-preserving embeddings</h2>
+<p>Not all properties of a 30-dimensional dataset can be kept in 2D. The choice made by t-SNE and UMAP: <strong>keep small (local) distances, give up large (global) ones</strong>.</p>
+<p>Intuition: imagine points lying on a ribbon curled up in 3D. What matters is that neighbouring points form a continuous ribbon, not that two far-apart parts of the ribbon happen to be closer in 3D than two other parts. In 2D we'd like to see the ribbon unrolled into a flat strip.</p>
+<p>Mathematically, such data lie on a <strong>manifold</strong>: a space that looks flat (linear) when you zoom in on any small region. The Earth is a sphere, but locally it looks flat, which is why flat maps of small regions work. Manifold-learning methods look at each point's <strong>local neighbourhood</strong> and try to place the same neighbours next to each other in 2D. What is lost is the relationship between distant regions.</p>
+<h2 id="4-how-t-sne-works">4. How t-SNE works</h2>
+<p><strong>The spring analogy.</strong> Connect each point to its nearby points with springs, strong for close neighbours and weak for distant ones. Then press the whole system flat onto a table (points may pass through each other) and let it settle into equilibrium. Points that were strongly connected end up close together; for points that were far apart, it hardly matters where they land.</p>
+<p><strong>More precisely:</strong></p>
+<ol>
+<li><strong>Affinities in the original (PCA) space.</strong> For each point, similarities to other points are computed with a Gaussian kernel. Its width is chosen per point so that each point has a fixed effective number of neighbours (the <strong>perplexity</strong>, typically 30). Dense and sparse regions are therefore treated alike.</li>
+<li><strong>Affinities in 2D.</strong> In the embedding, similarities are computed with a <strong>Student's t-distribution</strong> (one degree of freedom, i.e. a Cauchy kernel).</li>
+<li><strong>Optimization.</strong> Starting from an initial layout, points are moved iteratively so that the 2D affinities match the original ones (minimizing the KL divergence).</li>
+</ol>
+<p><strong>Why the t-distribution.</strong> Its predecessor, SNE, used a Gaussian in 2D as well. The t-distribution has <strong>heavier tails</strong> than the Gaussian. This allows moderately dissimilar points to be placed far apart in 2D, which relieves the "crowding problem" (there isn't enough room in 2D for all moderately-distant neighbours). As a result, t-SNE produces clearly separated clusters.</p>
+<p><strong>The consequence.</strong> Far apart and very far apart look almost the same to t-SNE, while close vs far matters a lot. So local neighbourhoods are kept, and clusters become visually obvious, but the arrangement of distant clusters relative to each other is largely arbitrary.</p>
+<h2 id="5-umap-and-how-it-relates-to-t-sne">5. UMAP, and how it relates to t-SNE</h2>
+<p>UMAP (McInnes, Healy &amp; Melville, arXiv 2018) was presented in very different language: topological data analysis, fuzzy simplicial complexes, Riemannian geometry. It was claimed to preserve local structure as well as t-SNE and <em>more global structure</em>. An influential 2019 <em>Nature Biotechnology</em> paper (Becht et al.) repeated this claim for single-cell data, and UMAP quickly became the default.</p>
+<p>Later work showed that the difference is much smaller than it looked:</p>
+<ul>
+<li><strong>Global structure comes from initialization.</strong> Original t-SNE starts from a random layout, so the final positions of distant clusters relative to each other are arbitrary. UMAP starts from a <em>spectral embedding</em> of the kNN graph (Laplacian eigenmaps — roughly, a PCA-like decomposition of the graph), which already contains a sensible global layout. Optimization mostly refines local structure and doesn't scramble the clusters, so some global structure survives. t-SNE initialized with PCA preserves global structure about as well (Kobak &amp; Linderman, <em>Nat. Biotechnol.</em> 2021).</li>
+<li><strong>Cluster compactness comes from the balance of forces.</strong> All these methods combine attraction between kNN-graph neighbours with repulsion between all points. UMAP behaves like t-SNE with <strong>stronger attraction</strong>: running t-SNE with the <em>exaggeration</em> parameter raised (to about 4) gives UMAP-like embeddings, because UMAP's sampling-based optimization effectively weakens repulsion (Böhm, Berens &amp; Kobak, <em>JMLR</em> 2022). Increasing attraction further gives layouts like ForceAtlas2 and, in the limit, Laplacian eigenmaps.</li>
+</ul>
+<p>So the intuitions in this lecture apply equally to t-SNE and UMAP; conceptually they are close relatives. Other methods in the same family include force-directed graph layouts (ForceAtlas2, SPRING — the spring intuition literally) and spectral methods (Laplacian eigenmaps, diffusion maps).</p>
+<p>A practical difference: modern implementations of both work from a <strong>kNN graph</strong> rather than from all pairwise distances (for t-SNE this is an approximation that works because the affinities of distant points are near zero). In scanpy, UMAP is computed from the graph built by <code>sc.pp.neighbors</code>.</p>
+<h2 id="6-what-t-sne-and-umap-do-not-preserve-parameters-and-pitfalls">6. What t-SNE and UMAP do not preserve; parameters and pitfalls</h2>
+<p><strong>Cluster sizes and spread are not meaningful.</strong> Each point's neighbourhood is normalized to look alike (perplexity in t-SNE, a per-point bandwidth in UMAP), so a tight cluster and a diffuse cluster in the original space can come out looking the same. The apparent size of a cluster on the plot mostly reflects <strong>how many cells</strong> it contains, not how heterogeneous they are. A large, spread-out island is not evidence of high transcriptional diversity; a small compact one can actually have higher within-cluster variance. (Variants such as densMAP try to retain density information.)</p>
+<p><strong>Distances between clusters are not meaningful.</strong> "These two clusters are closer on the UMAP, so they are more similar" is not a valid inference.</p>
+<p><strong>What is preserved</strong> is, approximately, who is neighbour to whom: the local structure of the manifold.</p>
+<p><strong>A safe rule.</strong> If you are not sure which properties a UMAP preserves, do not compute anything on UMAP coordinates. Use it to look at the data and generate hypotheses; compute statistics, clustering and distances in PCA space. Reporting a statistic computed on PCA is standard; reporting one computed on UMAP coordinates will (rightly) draw criticism. Much of the controversy about UMAP in the field (e.g., Chari &amp; Pachter, <em>PLoS Comput. Biol.</em> 2023) came from exactly such over-interpretation. Used as a visualization, UMAP remains very informative.</p>
+<p><strong>Input.</strong> UMAP is usually computed on the PCA representation, not on all genes. The result is very similar either way, but since downstream analysis uses the PCs, it is more consistent to visualize the same space.</p>
+<p><strong>Number of PCs.</strong> UMAPs from 20, 30, 50 PCs or the full matrix look nearly identical, consistent with data on a manifold of fewer than ~20–30 dimensions. With 5 PCs, distinct subclusters merge.</p>
+<p><strong>Number of neighbours</strong> (<code>n_neighbors</code>). Typically 15–30 (scanpy default 15, Seurat 30). Very small values make the embedding reflect only the most local structure and produce artifacts. Within a reasonable range, results change little.</p>
+<p><strong><code>min_dist</code></strong> (and <code>spread</code>). UMAP's original parameters <em>a</em> and <em>b</em> shape the low-dimensional similarity kernel; implementations derive them from the user-facing <code>min_dist</code> and <code>spread</code>. <code>min_dist</code> controls how tightly points pack: 0.1 gives very compact clusters, 0.5 looser blobs. Defaults differ: 0.5 in scanpy, 0.3 in Seurat — one reason the same data can look slightly different in the two. Choose whatever reads best; it is a visual setting.</p>
+<p><strong>Spurious clusters.</strong> With aggressive settings (strong attraction, few neighbours), these methods can split pure noise into convincing-looking clusters. On simulated data with no structure at all, random fluctuations get amplified into islands. Be very cautious about interpreting small separated groups.</p>
+<p><strong>Clustering is not done on UMAP.</strong> Clustering is done in PCA space — in practice on the kNN graph built from PCA (next lecture).</p>
+<h2 id="7-practical-setup-notebook-hygiene-and-what-is-in-adatax">7. Practical: setup, notebook hygiene, and what is in <code>adata.X</code></h2>
+<p>The practical runs in Google Colab (a GPU runtime is needed only for the GLM-PCA step at the end).</p>
+<p><strong>Notebook hygiene.</strong> Part of the final assessment is an analysis notebook. Delete outputs that don't help the reader (pip install logs, verbose messages); keep the plots and tables that tell the story. A notebook is read by people, not just executed.</p>
+<p><strong>Imports and settings.</strong> numpy, pandas, matplotlib/seaborn, and <strong>scanpy</strong> (<code>sc</code>), the main analysis library. <code>sc.settings.verbosity</code> sets how much functions report about what they changed. Colab machines usually have two CPU cores; limiting parallel jobs to 2 (<code>sc.settings.n_jobs = 2</code>) avoids errors from functions trying to use more cores than available.</p>
+<p><strong>AnnData recap.</strong></p>
+<ul>
+<li><code>adata.X</code> — the expression matrix (cells × genes), the core of the object.</li>
+<li><code>adata.obs</code> / <code>adata.var</code> — data frames describing cells and genes.</li>
+<li><code>adata.obsm</code> — low-dimensional representations of cells (PCA, t-SNE, UMAP).</li>
+<li><code>adata.obsp</code> — cell × cell matrices, i.e. <strong>graphs</strong>. A graph (vertices connected by edges) can be stored as an adjacency matrix: nonzero entries are edges, and in a weighted graph the values are the weights. Sparse matrices make this cheap. The kNN graph lives here. <code>adata.varp</code> is the gene × gene equivalent (e.g., gene graphs for finding modules).</li>
+</ul>
+<p><strong>The dataset.</strong> PBMCs (peripheral blood mononuclear cells) from <strong>three donors</strong>, loaded from an <code>.h5ad</code> file with <code>sc.read_h5ad</code>. Pre-existing annotations are removed. The donor structure matters later in the practical.</p>
+<p><strong>Always check what <code>adata.X</code> contains.</strong> Downloaded objects may hold raw counts, depth-normalized values or log-normalized values, and many functions assume one of these.</p>
+<ul>
+<li>Look at a few values, or simply the maximum. Integers (e.g., a maximum of 8311) → raw counts. Normalization or a log transform would essentially never produce only integers.</li>
+<li>Non-integer values: compute per-cell sums. All cells summing to the same number → depth-normalized but not log-transformed. Unequal sums (and a small maximum, typically below ~10) → log-transformed.</li>
+<li>Don't convert a large sparse matrix to dense just to inspect it.</li>
+</ul>
+<h2 id="8-practical-qc-doublets-and-keeping-the-raw-counts">8. Practical: QC, doublets, and keeping the raw counts</h2>
+<p><strong>QC metrics.</strong> Flag mitochondrial genes (<code>adata.var[&quot;mt&quot;] = adata.var_names.str.startswith(&quot;MT-&quot;)</code>) and call <code>sc.pp.calculate_qc_metrics(adata, qc_vars=[&quot;mt&quot;], inplace=True)</code>. It adds genes per cell, counts per cell and percent mitochondrial counts to <code>adata.obs</code> — the metrics computed by hand in Lecture 4. Plot their distributions and set thresholds. Here the authors had already filtered most low-quality cells; additional cuts (about 12% mitochondrial, a minimum of ~700 genes) remove a small tail of cells that would otherwise add noise to clustering.</p>
+<p><strong>Doublets.</strong> Run Scrublet (<code>sc.pp.scrublet</code>) <strong>after</strong> removing low-quality cells but <strong>on raw counts, before any normalization or log transform</strong>. It adds <code>doublet_score</code> and <code>predicted_doublet</code> to <code>adata.obs</code>. Here we don't filter on them yet, to see later how doublets look in the embedding.</p>
+<p><strong>Sparsity.</strong> Fewer than 10% of matrix entries are nonzero.</p>
+<p><strong>Keep the raw counts.</strong> After normalization and log transform, the counts in <code>adata.X</code> are gone, but some methods need them. Differential expression methods based on negative binomial regression (e.g., DESeq2 or edgeR on pseudobulk) model integer counts and expect them as input. Save a copy before transforming, either as a separate object (<code>adata_raw = adata.copy()</code>) or in a layer (<code>adata.layers[&quot;counts&quot;] = adata.X.copy()</code>).</p>
+<p><strong>Why <code>.copy()</code>.</strong> In Python, <code>b = a</code> does not copy an object; both names point to the same object in memory, so modifying <code>b</code> changes <code>a</code>. With AnnData, forgetting <code>.copy()</code> means your "raw" object gets normalized along with the main one. This is a common and easy-to-miss bug.</p>
+<h2 id="9-practical-distributions-normalization-log-transform-highly-variable-genes">9. Practical: distributions, normalization, log transform, highly variable genes</h2>
+<p><strong>Count distributions of single genes.</strong> <em>MALAT1</em>, a very highly expressed long non-coding RNA, has a broad distribution of large counts. <em>CD4</em> is mostly zeros, with occasional 1s and 2s. The <em>CD4</em> picture is the typical one, consistent with a negative binomial with a small mean.</p>
+<p><strong>Mean–variance plot.</strong> For every gene, plot log10(variance) against log10(mean). At low means, variance ≈ mean (Poisson-like). At higher means, variance grows much faster: overdispersion. Two components add up here: the technical gamma–Poisson variability from Lecture 5, and real biological differences between cells. Genes whose variance lies clearly <strong>above the overall trend</strong> vary more than the null model predicts, and these are the biologically interesting ones. Selecting them is the idea behind <strong>highly variable genes</strong>.</p>
+<p><strong>Normalization.</strong> Divide each cell's counts by its total and multiply by a common target. Here the target is the median total count (≈5,493), so a typical cell keeps its scale (<code>sc.pp.normalize_total</code>; with no target given, it uses the median). After scaling, counts are no longer integers. For a low-expression gene such as <em>CD14</em>, the histogram (with a log y-axis) shows separate bumps around what were 1, 2, 3 counts, smeared by different scale factors, which merge at higher values.</p>
+<p><strong>Log transform.</strong> <code>sc.pp.log1p</code> computes ln(x + 1). After it:</p>
+<ul>
+<li><em>MALAT1</em> looks roughly normal (with some real heterogeneity).</li>
+<li><em>CD4</em> does not: a spike at zero plus separate bumps inherited from the 1-, 2-, 3-count groups. This is the low-count artifact from Lecture 5. The spike at zero is often misread as "zero inflation" or "dropouts", but it is what a negative binomial with a small mean looks like after the log.</li>
+<li>On the mean–variance plot, the dependence is still there but much weaker. Before the log, a handful of very highly expressed genes had variances orders of magnitude larger than the rest; on a linear scale they would account for almost all the variance in the dataset. After the log, no small group of genes dominates. This is why even clustering on log-normalized expression works reasonably.</li>
+</ul>
+<p><strong>Don't run in-place transformations twice.</strong> <code>normalize_total</code> and <code>log1p</code> overwrite <code>adata.X</code>. Re-running the cell silently normalizes and logs already-transformed data — no error, just nonsense. Accidentally re-running a cell is common. If in doubt, start again from the saved raw counts; these steps take seconds. By contrast, re-running <code>sc.tl.umap</code> is harmless: it reads the kNN graph without modifying it and just overwrites the UMAP coordinates.</p>
+<p><strong>Highly variable genes.</strong> <code>sc.pp.highly_variable_genes(adata, n_top_genes=3000)</code> models how variability depends on mean expression and ranks genes by how far they exceed the trend. It adds columns to <code>adata.var</code>: <code>highly_variable</code>, mean, dispersion (NaN for genes with zero counts everywhere). On the mean–variance plot, many selected genes have low or medium expression; the most highly expressed genes are often <em>not</em> highly variable relative to their mean. (A <code>batch_key</code> option, here for the donor, will be explained next lecture.)</p>
+<h2 id="10-practical-scaling-pca-knn-graph-umap-batch-effects-glm-pca">10. Practical: scaling, PCA, kNN graph, UMAP, batch effects, GLM-PCA</h2>
+<p><strong><code>adata.raw</code> and subsetting.</strong> Store the log-normalized expression of all genes in <code>adata.raw = adata</code> (used later, e.g., for plotting any gene). Then subset the main object to the 3,000 HVGs. Scaling makes the matrix dense, so restricting to HVGs saves a lot of memory.</p>
+<p><strong>Scaling.</strong> <code>sc.pp.scale(adata, max_value=10)</code> z-scores each gene (mean 0, SD 1). Zeros become negative values, which is why the matrix becomes dense. <code>max_value=10</code> clips values more than 10 SD from the mean. PCA minimizes <em>squared</em> distances, so a few extreme outliers can pull a component toward themselves; clipping is a simple safeguard. Good datasets have few such outliers; bad ones may have many.</p>
+<p><strong>PCA.</strong> <code>sc.tl.pca(adata, n_comps=30)</code> stores the cell embedding in <code>adata.obsm[&quot;X_pca&quot;]</code> — the 30-dimensional working representation.</p>
+<p><strong>PC1 vs PC2 colored by marker genes</strong> shows where the main PBMC populations are:</p>
+<ul>
+<li><em>CD3E</em> — T cells</li>
+<li><em>NKG7</em> — NK cells and cytotoxic CD8 T cells</li>
+<li><em>CD19</em> (or <em>MS4A1</em>) — B cells</li>
+<li><em>CD14</em> — classical (CD14+) monocytes</li>
+<li><em>FCGR3A</em> (encodes CD16) — CD16+ NK cells and non-classical (CD16+) monocytes</li>
+</ul>
+<p>Even two PCs separate the main populations reasonably, but UMAP shows the structure in more detail.</p>
+<p><strong>kNN graph and UMAP.</strong> <code>sc.pp.neighbors(adata)</code> builds the kNN graph on the PCs and stores it in <code>adata.obsp</code> (distances and connectivities). <code>sc.tl.umap(adata, min_dist=0.3)</code> lays it out. A kNN graph keeps only distances to each cell's k nearest neighbours and discards everything else. It is a discrete approximation of the manifold: once you work with the graph, you have committed to local structure only.</p>
+<p><strong>Batch effect.</strong> Coloring the UMAP by donor shows that cells of the same type split by donor. Without that coloring, you would likely call these separate clusters. The split is not a UMAP artifact: UMAP was computed from the PCs, so the separation is present in PCA space too. This donor-driven variation is a <strong>batch effect</strong>, the topic of the next lecture.</p>
+<p><strong>Doublets on the UMAP.</strong> Color by <code>doublet_score</code>. Small groups of cells with uniformly high scores, often sitting between two cell types, are likely doublet clusters and can be removed (before or after this step). Here there is no dramatic case.</p>
+<p><strong>Markers on the UMAP</strong> (<code>sc.pl.umap(adata, color=[...])</code>) identify T cells, CD8 T and NK cells, B cells, CD14 and CD16 monocytes. The cell-type structure is now overlaid with donor structure.</p>
+<p><strong>GLM-PCA.</strong> Normalize–log–scale–PCA is a workaround for PCA's implicit Gaussian assumption. <strong>GLM-PCA</strong> instead fits a low-rank model with a count likelihood (Poisson here; NB is also possible) directly to the <strong>raw count matrix</strong>. It has no closed-form solution and must be fitted by iterative optimization. Classic implementations take hours on a typical dataset, while the standard pipeline takes seconds — one reason GLM-PCA isn't the default. Faster algorithms exist: fastglmpca (Weine, Carbonetto &amp; Stephens, <em>Bioinformatics</em> 2024) is an R package; the practical uses a Python/PyTorch implementation that runs on GPU and keeps the matrix sparse, finishing in minutes.</p>
+<p>The GLM-PCA embedding looks different from the PCA one, but the kNN graph and UMAP built on it look very similar to the standard pipeline's; the donor separation is, if anything, more pronounced. For typical data, GLM-PCA gives little benefit. It is most worth considering when total counts per cell are very low, where log-transform artifacts are worst.</p>
+<pre><code class="language-python">import scanpy as sc
+
+adata_raw = adata.copy()                       # keep raw counts
+sc.pp.normalize_total(adata)                   # target = median total counts
+sc.pp.log1p(adata)
+sc.pp.highly_variable_genes(adata, n_top_genes=3000)
+adata.raw = adata                              # log-normalized, all genes
+adata = adata[:, adata.var.highly_variable].copy()
+sc.pp.scale(adata, max_value=10)
+sc.tl.pca(adata, n_comps=30)
+sc.pp.neighbors(adata)                         # kNN graph on PCs
+sc.tl.umap(adata, min_dist=0.3)
+sc.pl.umap(adata, color=[&quot;donor&quot;, &quot;doublet_score&quot;, &quot;CD3E&quot;, &quot;CD14&quot;])</code></pre>
+<h2 id="11-key-points">11. Key points</h2>
+<ul>
+<li>The cells × ~30 PCs matrix is the working representation for clustering, trajectories and statistics. The exact number of PCs (20–50) rarely matters; too few merges real populations.</li>
+<li>t-SNE and UMAP compress this space to 2D by preserving <strong>local neighbourhoods</strong> and giving up global geometry.</li>
+<li>On t-SNE/UMAP plots, <strong>cluster sizes, spreads and between-cluster distances are not interpretable</strong>. Use them to look and generate hypotheses; compute on PCA.</li>
+<li>UMAP ≈ t-SNE with stronger attraction; its better global layout comes mostly from spectral initialization.</li>
+<li>Aggressive parameters can create clusters out of noise.</li>
+<li>In practice: check what <code>adata.X</code> contains; run Scrublet on raw counts; keep a copy of the counts; never re-run in-place transformations; color the UMAP by donor/batch and doublet score before interpreting clusters.</li>
+</ul>
+<h2 id="glossary">Glossary</h2>
+<div class="table-wrap"><table>
+<thead><tr>
+<th>Term</th>
+<th>Meaning</th>
+</tr></thead><tbody>
+<tr><td>Manifold</td><td>A space that looks flat when you zoom into any small region; cells are thought to lie on a low-dimensional manifold inside expression space</td></tr>
+<tr><td>Neighbour embedding</td><td>Family of methods (t-SNE, UMAP, ForceAtlas2) that place kNN-graph neighbours close together in 2D</td></tr>
+<tr><td>Perplexity</td><td>t-SNE setting for the effective number of neighbours per point</td></tr>
+<tr><td>Exaggeration</td><td>t-SNE factor that multiplies attractive forces; higher values give more compact, UMAP-like clusters</td></tr>
+<tr><td>kNN graph</td><td>Graph connecting each cell to its k nearest neighbours; an approximation of the manifold</td></tr>
+<tr><td><code>min_dist</code></td><td>UMAP setting for how tightly points pack in 2D</td></tr>
+<tr><td>Highly variable genes</td><td>Genes whose variance exceeds what the mean–variance trend predicts</td></tr>
+<tr><td>Batch effect</td><td>Variation driven by sample, donor or processing rather than biology of interest</td></tr>
+<tr><td>GLM-PCA</td><td>PCA-like decomposition with a count (Poisson/NB) likelihood, fitted on raw counts</td></tr>
+</tbody></table></div>
+<h2 id="further-reading">Further reading</h2>
+<ul>
+<li>van der Maaten &amp; Hinton (2008). Visualizing data using t-SNE. <em>JMLR</em> 9:2579–2605.</li>
+<li>McInnes, Healy &amp; Melville (2018). UMAP: Uniform Manifold Approximation and Projection. arXiv:1802.03426.</li>
+<li>Kobak &amp; Berens (2019). The art of using t-SNE for single-cell transcriptomics. <em>Nat. Commun.</em> 10:5416.</li>
+<li>Kobak &amp; Linderman (2021). Initialization is critical for preserving global data structure in both t-SNE and UMAP. <em>Nat. Biotechnol.</em> 39:156–157.</li>
+<li>Böhm, Berens &amp; Kobak (2022). Attraction-repulsion spectrum in neighbor embeddings. <em>JMLR</em> 23(95):1–32.</li>
+<li>Chari &amp; Pachter (2023). The specious art of single-cell genomics. <em>PLoS Comput. Biol.</em> 19:e1011288.</li>
+<li>Townes et al. (2019). Feature selection and dimension reduction for single-cell RNA-seq based on a multinomial model. <em>Genome Biol.</em> 20:295.</li>
+<li>Weine, Carbonetto &amp; Stephens (2024). Accelerated dimensionality reduction of single-cell RNA sequencing data with fastglmpca. <em>Bioinformatics</em>.</li>
+</ul>
+  </div></main>
+  <footer class="bottom">
+    <p>© 2026 Sergey Isaev. Updated <time datetime="2026-11-21">21 November 2026</time>.</p>
+  </footer>
+</body>
+</html>

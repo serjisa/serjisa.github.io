@@ -1,0 +1,234 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Lecture 4 | Sergey Isaev</title>
+  <meta name="description" content="Sergey Isaev — computational biologist working on single-cell genomics and lineage tracing at the Medical University of Vienna">
+  <link rel="canonical" href="https://isaev.cc/bf.msu.2026/lecture4/">
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="Lecture 4 | Sergey Isaev">
+  <meta property="og:description" content="Sergey Isaev — computational biologist working on single-cell genomics and lineage tracing at the Medical University of Vienna">
+  <meta property="og:url" content="https://isaev.cc/bf.msu.2026/lecture4/">
+  <meta property="og:image" content="https://isaev.cc/assets/img/portrait.webp">
+  <meta name="color-scheme" content="light dark">
+  <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#1c1c1d" media="(prefers-color-scheme: dark)">
+  <link rel="icon" href="/favicon-32.png" sizes="32x32" type="image/png">
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+  <link rel="stylesheet" href="/assets/css/site.css?v=1795261217">
+</head>
+<body class="page">
+  <a class="skip" href="#main">Skip to content</a>
+  <header class="top">
+    <a class="brand" href="/">sergey <b>isaev</b></a>
+    <nav aria-label="Main">
+      <a href="/publications/">publications</a>
+      <a href="/code/">code</a>
+      <a href="/assets/pdf/cv.pdf">cv</a>
+    </nav>
+  </header>
+  <main id="main"><div class="inner">
+<h1>Lecture 4. Quality control of single-cell data and working with AnnData</h1>
+<p>This lecture is about <strong>quality control (QC) of the count matrix</strong>: telling real cells from empty droplets, damaged cells and doublets. This is a different kind of QC from read-level QC (base qualities, adapters). The practical part introduces <strong>scanpy</strong> and its data container <strong>AnnData</strong>, which we will use for the rest of the course.</p>
+<h2 id="1-single-cell-data-are-sparse">1. Single-cell data are sparse</h2>
+<p>A droplet-based experiment captures only a minority of the mRNA molecules in each cell — roughly 10–30%, depending on chemistry and cell type. As a result, most genes in a given cell are observed 0 times, and many of the rest only once or twice. Most entries of the count matrix are zero.</p>
+<p>Keep this intuition in mind. An aggregate coverage plot summed over all cells and genes can look reasonable. For one gene in one cell, though, there are usually only one or two reads. The same sparsity is why isoforms and individual exons are hard to study with standard 10x data: coverage is concentrated at the 3′ end, and per-cell counts are tiny.</p>
+<h2 id="2-empty-droplets-singlets-doublets-what-qc-must-separate">2. Empty droplets, singlets, doublets: what QC must separate</h2>
+<p>Cell Ranger's main output is a <strong>genes × barcodes matrix of UMI counts</strong>: for each barcode, how many distinct UMIs were detected for each gene. It comes in two versions: <strong>raw</strong> (all barcodes) and <strong>filtered</strong> (only barcodes called as cells). Remember: the barcode is the cell's "passport". Everything with the same barcode is treated as one cell.</p>
+<p>Droplets fall into three main groups, plus two rare cases.</p>
+<ul>
+<li><strong>Empty droplets.</strong> These contain a bead but no cell. They are not truly empty: ambient RNA from dead or lysed cells gets in, is reverse transcribed and receives the bead's barcode. Such barcodes have a handful of UMIs. They are by far the most numerous barcodes in the raw matrix.</li>
+<li><strong>Singlets.</strong> One cell and one bead — what we want to analyse.</li>
+<li><strong>Doublets.</strong> Two (or more) cells share one bead, so their transcriptomes are merged under one barcode. They arise by chance co-encapsulation (Lecture 2) and from cell clumps that were not fully dissociated.</li>
+<li><strong>Cells without a bead</strong> are lost without a trace. 10x avoids this by loading beads so densely that almost every droplet gets exactly one.</li>
+<li><strong>Droplets with two beads</strong> are rare but do occur. They split one cell between two barcodes.</li>
+</ul>
+<p>How cleanly a library comes out also depends on handwork. Every lysed cell adds to the ambient RNA, so gentle pipetting and careful handling of cells and nuclei directly reduce noise.</p>
+<p>QC removes, in order:</p>
+<ol>
+<li>empty droplets;</li>
+<li>low-quality singlets (damaged or dying cells);</li>
+<li>doublets.</li>
+</ol>
+<h2 id="3-removing-empty-droplets">3. Removing empty droplets</h2>
+<p><strong>The simple approach: a threshold on UMI counts.</strong> A real cell contains far more RNA than the ambient "soup" in a droplet. Real cells typically have thousands of UMIs, often more than 10,000; empty droplets have a few to a few dozen. So if you sum the UMIs per barcode and plot a histogram (on a log scale), you see a <strong>bimodal distribution</strong>. A threshold placed in the valley between the two peaks separates empty droplets (left) from cells (right). This simple approach works well and is still widely used.</p>
+<p><strong>Genes per cell often separates even better.</strong> Count how many genes have a non-zero count in each barcode. Ambient RNA is dominated by a few very highly expressed genes (e.g., haemoglobin in blood-contaminated samples), so many UMIs in an empty droplet fall into the same genes. The gap between empty droplets and cells is therefore even wider in genes per cell than in UMIs per cell.</p>
+<p><strong>The knee plot (barcode rank plot).</strong> This is the standard way to show the same information.</p>
+<ul>
+<li>Sort barcodes by total UMIs and plot UMI count against rank, both axes on a log scale.</li>
+<li>The curve is the cumulative distribution turned on its side. A plateau of high-UMI cells is followed by a steep drop to the many low-UMI empty droplets.</li>
+<li>The <strong>knee</strong> and <strong>inflection point</strong> of the drop correspond to the valley of the histogram.</li>
+</ul>
+<p>The histogram and the knee plot carry the same information; it's worth being able to read both.</p>
+<p><strong>EmptyDrops</strong> is the most widely used refinement, and an implementation of it is built into Cell Ranger (version 3 and later).</p>
+<ol>
+<li>Barcodes above the knee are kept as cells.</li>
+<li>Barcodes with very few UMIs (by default at most 100 in the original R implementation) are taken as certainly empty. They are used to estimate the <strong>ambient profile</strong>: the gene proportions in the soup.</li>
+<li>For each barcode in the uncertain middle zone, EmptyDrops tests whether its counts could plausibly be a random sample from the ambient profile.</li>
+<li>The p-values are corrected for multiple testing (FDR). Barcodes whose profile differs significantly from the soup are kept as cells, even if they have few UMIs.</li>
+</ol>
+<p><strong>Why this matters: small cells.</strong> Some cells are biologically small or RNA-poor. <strong>Neutrophils</strong> are the classic example. They contain little mRNA and are rich in RNases and other degradative enzymes that interfere with reverse transcription. They therefore come out with low UMI counts and can be removed by standard filtering. If neutrophils (or other granulocytes) matter for your question, filter carefully. In most datasets, though, the low-UMI fraction is mostly debris and damaged cells.</p>
+<p><strong>After Cell Ranger.</strong> Even with EmptyDrops built in, always plot the distributions of the filtered matrix yourself. A second, low mode (for example, cells with fewer than ~1,000 UMIs when the main mode is ~12,000) usually consists of damaged or dying cells. Such cells later form junk clusters or blur the boundaries between real ones, so an extra threshold is often worthwhile.</p>
+<h2 id="4-removing-damaged-cells-the-mitochondrial-fraction">4. Removing damaged cells: the mitochondrial fraction</h2>
+<p>When a cell is damaged during dissociation, its plasma membrane is breached and cytoplasmic mRNA leaks out. Mitochondria, enclosed by their own two membranes, keep their transcripts. As a result, <strong>damaged and dying cells show an increased percentage of mitochondrial UMIs</strong>. The percentage of mitochondrial counts per cell is one of the most useful QC metrics.</p>
+<ul>
+<li><strong>Plot first, then set a threshold.</strong> Plot the distribution and cut off the high tail. The right threshold is dataset- and tissue-dependent. In some datasets the main mode lies at 0–5%, so a cutoff around 5–10% is sensible. In others, for example metabolically active tissues such as heart or kidney, it lies at 0–20%.</li>
+<li><strong>Single-nucleus data</strong> should contain almost no mitochondrial reads, since mitochondria are removed with the cytoplasm. A high mitochondrial fraction there indicates cytoplasmic contamination.</li>
+<li><strong>Finding mitochondrial genes.</strong> In human references they start with <code>MT-</code> (13 protein-coding genes); in mouse, with <code>mt-</code>. Some references (e.g., some kallisto indexes) don't use this prefix, and the list has to be made by hand (<em>ATP8</em>, <em>ND6</em>, etc.).</li>
+</ul>
+<h2 id="5-doublets-and-scrublet">5. Doublets and Scrublet</h2>
+<p><strong>Why doublets are dangerous.</strong> A doublet of two different cell types looks like a cell expressing markers of both. Doublets can form their own cluster that looks like a new cell type or an intermediate state.</p>
+<p>A cautionary example from the lecturer's own work. In a follicular lymphoma dataset analysed without doublet removal, a cluster of CD4⁺CD8⁺ "double-positive" T cells appeared. Several days of analysis went into it before it turned out to be CD4 + CD8 T-cell doublets. Double-positive T cells do exist: they are a normal stage of thymic development, and smaller double-positive populations have been described in some peripheral tissues and diseases. But a double-positive cluster in a single-cell dataset should first be checked for doublets.</p>
+<p><strong>A general lesson.</strong> If your data seem to show something completely new that nobody has seen before, the first hypothesis should be an artifact. It is not impossible that it's real, just much less likely.</p>
+<p><strong>Why doublets can be detected.</strong> A doublet's profile is roughly the <em>sum</em> of two cells, so it also tends to have higher UMI and gene counts. Real intermediate states are not simple mixtures. A cell differentiating from state A to state B is not the average (A + B)/2: transitions usually switch on their own genes, absent from both A and B. That is the main argument for a real "bridge" population between two clusters.</p>
+<p><strong>Scrublet.</strong></p>
+<ol>
+<li>Simulate artificial doublets by adding up the profiles of random pairs of observed cells.</li>
+<li>Embed real and simulated cells together (via PCA) and build a nearest-neighbour graph.</li>
+<li>For each real cell, compute a <strong>doublet score</strong> from the fraction of simulated doublets among its neighbours. Real doublets sit among simulated ones, while singlets are surrounded mostly by real cells.</li>
+<li>Pick a threshold automatically, using the score distribution of the simulated doublets as a reference, and return both scores and binary predictions.</li>
+</ol>
+<p>Scrublet mainly catches doublets of two <em>different</em> cell types, and those are the ones that matter. Doublets of two cells of the same type are mostly harmless: they blur a cluster but don't create a new one. Scrublet should be run <strong>separately for each sample</strong> (each 10x channel), because doublets form within one channel.</p>
+<p>Scrublet's automatic threshold doesn't always work: the score distribution is often not clearly bimodal, and visible doublet clusters may remain. A practical, conservative alternative is a fixed threshold of about 0.15. Also check whether whole clusters have high doublet scores.</p>
+<h2 id="6-how-to-think-about-qc-thresholds">6. How to think about QC thresholds</h2>
+<p>There is no universal law for how to filter. Analysis is a tool for getting biological insight, not a goal in itself. We filter empty droplets, damaged cells and doublets because they stop us from finding cell types, describing their states and comparing proportions: they create junk clusters, connect unrelated ones and add noise.</p>
+<p>In practice:</p>
+<ul>
+<li>Always look at the distributions (UMIs, genes, mitochondrial fraction, doublet score) and choose thresholds that remove clear outliers.</li>
+<li>Small differences in thresholds (e.g., 1,000 vs 2,000 genes) usually change a few dozen cells and don't affect conclusions.</li>
+<li>What matters is avoiding situations where a large share of cells (say 30%) are low quality.</li>
+<li>If your conclusions change with a small change in thresholds, they are not robust.</li>
+</ul>
+<h2 id="7-the-cell-ranger-web-summary">7. The Cell Ranger web summary</h2>
+<p>Before doing your own QC, it is worth looking at what Cell Ranger has already reported. Cell Ranger is run with a single command (reference, FASTQ path, sample name) but takes a long time, so in class we only look at its output. Alongside the matrices it writes <code>web_summary.html</code> with three blocks of QC. Cell Ranger flags in bold any metric outside its expected range. This is useful because it's often hard to know at what value to start worrying (is 90% mapped fine? 80%?).</p>
+<ol>
+<li><strong>Sequencing.</strong>
+<ul>
+<li><strong>Q30 metrics:</strong> the fraction of bases with Phred quality ≥ 30 (error probability ≤ 0.1%), separately for barcode, UMI and RNA reads.</li>
+<li><strong>Valid barcodes:</strong> the fraction of reads whose barcode matches the 10x whitelist (after error correction).</li>
+<li><strong>Number of reads.</strong> For planning, 10x recommends at least ~20,000 reads per cell; 20,000–50,000 is common, and more reads detect more genes. Total reads ≈ expected cells × reads per cell.</li>
+</ul></li>
+<li><strong>Mapping.</strong> The fraction of reads mapped to the genome, and to exonic, intronic and intergenic regions. Low mapping often means the wrong reference (wrong species).</li>
+<li><strong>Cells.</strong> The barcode rank (knee) plot, estimated number of cells, mean reads per cell, median genes and UMIs per cell.</li>
+</ol>
+<h2 id="8-tools-colab-scanpy-and-scverse">8. Tools: Colab, scanpy and scverse</h2>
+<p>The practical sessions run in <strong>Google Colab</strong>. You can use its built-in terminal, or run shell commands from a notebook cell with a leading <code>!</code>. Install scanpy with <code>pip install scanpy</code>; Colab may warn about package version conflicts.</p>
+<p><strong>scanpy</strong> (imported as <code>sc</code>) is the main Python library for single-cell analysis. It belongs to the <strong>scverse</strong> ecosystem:</p>
+<ul>
+<li><strong>core packages:</strong> anndata, scanpy, muon (multimodal data), squidpy (spatial data), scvi-tools and others;</li>
+<li><strong>ecosystem packages:</strong> many more, contributed by the community. These are often excellent but less guaranteed to be maintained, so check for recent activity before relying on one.</li>
+</ul>
+<p>A good way to learn what is possible is to read scanpy's tutorials and browse its API documentation, looking up unfamiliar functions (diffusion maps, trajectory inference…) as you go. Nobody remembers every argument; copying commands from tutorials, including your own, is normal practice.</p>
+<p><code>sc.settings.verbosity = 3</code> makes scanpy report what each function does and where it stores the results.</p>
+<h2 id="9-anndata-structure-and-practical-tips">9. AnnData: structure and practical tips</h2>
+<p><code>sc.read_10x_h5(&quot;filtered_feature_bc_matrix.h5&quot;)</code> reads Cell Ranger output into an <strong>AnnData</strong> object. (HDF5 is a hierarchical binary format that stores several related arrays in one file.) AnnData keeps the matrix and all its annotations aligned with each other.</p>
+<div class="table-wrap"><table>
+<thead><tr>
+<th>Slot</th>
+<th>What it holds</th>
+<th>Shape</th>
+</tr></thead><tbody>
+<tr><td><code>adata.X</code></td><td>The main matrix: rows = cells (observations), columns = genes (variables)</td><td>n_obs × n_vars</td></tr>
+<tr><td><code>adata.obs</code></td><td>Data frame describing cells: sample, tissue, cluster, cell type, QC metrics…</td><td>n_obs rows</td></tr>
+<tr><td><code>adata.var</code></td><td>Data frame describing genes: gene IDs, feature type, mitochondrial flag…</td><td>n_vars rows</td></tr>
+<tr><td><code>adata.obsm</code></td><td>Low-dimensional representations of cells, e.g. <code>X_pca</code>, <code>X_umap</code></td><td>n_obs × k each</td></tr>
+<tr><td><code>adata.varm</code></td><td>Per-gene matrices, e.g. PCA loadings</td><td>n_vars × k each</td></tr>
+<tr><td><code>adata.layers</code></td><td>Alternative versions of X, e.g. raw counts vs normalized values</td><td>n_obs × n_vars each</td></tr>
+<tr><td><code>adata.uns</code></td><td>Unstructured metadata (parameters, colour maps…)</td><td>any</td></tr>
+</tbody></table></div>
+<p><strong>Everything must match the cells and genes.</strong> An <code>obsm</code> entry must have exactly one row per cell, so you can't store, say, a PCA from another dataset there. Subsetting cells (e.g., after QC) subsets every slot consistently. Filtered-out cells are gone from that object, so keep a copy if you may need them.</p>
+<p><strong>Practical tips.</strong></p>
+<ul>
+<li><strong>Unique gene names.</strong> Cell Ranger references contain some different genes (different Ensembl IDs) that share one symbol. Run <code>adata.var_names_make_unique()</code>, which appends <code>-1</code>, <code>-2</code>… to the repeats, so that plotting by gene name is unambiguous.</li>
+<li><strong>Barcode names.</strong> The <code>-1</code> suffix on 10x barcodes marks the library (GEM well). It matters only when several libraries are combined in one Cell Ranger run. A common practice is to replace it with a sample prefix, e.g. <code>sample001_AAACCTG…</code>, so that barcodes stay unique when samples are merged.</li>
+<li><strong>Categorical columns.</strong> Store repetitive labels (sample, tissue, cluster, cell type) as pandas <code>category</code>. Each distinct value is stored once and rows hold small integer codes, which can save a lot of memory. For columns where nearly every value is unique, categoricals don't help, and numbers should stay numeric.</li>
+<li><strong>Mitochondrial flag.</strong> <code>adata.var[&quot;mt&quot;] = adata.var_names.str.startswith(&quot;MT-&quot;)</code> (use <code>&quot;mt-&quot;</code> for mouse).</li>
+<li><strong>Slicing.</strong> AnnData objects can be sliced like data frames, e.g. <code>adata[adata.obs[&quot;sample&quot;] == &quot;sample001&quot;]</code>, or by a boolean mask over genes.</li>
+<li><strong>Building one by hand.</strong> You can create an object from any matrix: <code>ad.AnnData(X=matrix, obs=obs_df, var=var_df)</code>. This is useful when reading output of a tool scanpy has no reader for.</li>
+<li><strong>Saving and sharing.</strong> <code>adata.write_h5ad(&quot;file.h5ad&quot;)</code> and <code>sc.read_h5ad(&quot;file.h5ad&quot;)</code> save and load the whole object in one file. <code>.h5ad</code> files are also how processed datasets are commonly shared (e.g., Zenodo, CELLxGENE, GEO supplementary files).</li>
+<li><strong>Plotting.</strong> scanpy's plotting functions know where things are stored, e.g. <code>sc.pl.embedding(adata, basis=&quot;X_umap&quot;, color=&quot;cell_type&quot;)</code>.</li>
+</ul>
+<h2 id="10-sparse-matrices-and-memory">10. Sparse matrices and memory</h2>
+<p>Memory (RAM) is a real constraint in single-cell analysis; even servers with a terabyte of RAM fill up. Consider 20,000 genes × 1,000,000 cells = 2×10¹⁰ values. At 4 bytes per value (float32) a dense matrix needs about 80 GB, and even at 1 byte per value it needs about 20 GB.</p>
+<p>Since most values are zero, <code>adata.X</code> is usually stored as a <strong>sparse matrix</strong>, which records only the non-zero values and their positions. There are two common layouts:</p>
+<ul>
+<li><strong>CSR</strong> (compressed sparse row): fast access to rows, i.e. cells. This is the usual layout for <code>adata.X</code>.</li>
+<li><strong>CSC</strong> (compressed sparse column): fast access to columns, i.e. genes.</li>
+</ul>
+<p>Converting to dense (<code>adata.X.toarray()</code>) causes a memory spike; avoid it on real datasets. To create a sparse matrix yourself, use <code>scipy.sparse.csr_matrix(dense_array)</code>. For data too large for memory, AnnData can also work with backed (on-disk) mode, but fewer functions support it.</p>
+<h2 id="11-qc-in-code-a-minimal-workflow">11. QC in code: a minimal workflow</h2>
+<pre><code class="language-python">import scanpy as sc
+import numpy as np
+
+adata = sc.read_10x_h5(&quot;filtered_feature_bc_matrix.h5&quot;)
+adata.var_names_make_unique()
+
+# QC metrics: total UMIs, genes per cell, % mitochondrial
+adata.var[&quot;mt&quot;] = adata.var_names.str.startswith(&quot;MT-&quot;)
+sc.pp.calculate_qc_metrics(adata, qc_vars=[&quot;mt&quot;], inplace=True, log1p=False)
+# -&gt; adata.obs[&quot;total_counts&quot;], [&quot;n_genes_by_counts&quot;], [&quot;pct_counts_mt&quot;]
+
+# The same by hand, for understanding
+umis = np.asarray(adata.X.sum(axis=1)).ravel()
+genes = np.asarray((adata.X &gt; 0).sum(axis=1)).ravel()
+
+# Look at the distributions before choosing thresholds
+sc.pl.violin(adata, [&quot;total_counts&quot;, &quot;n_genes_by_counts&quot;, &quot;pct_counts_mt&quot;], multi_panel=True)
+
+# Example thresholds (dataset-specific!)
+adata = adata[(adata.obs.total_counts &gt;= 2000) &amp;
+              (adata.obs.n_genes_by_counts &gt;= 600) &amp;
+              (adata.obs.pct_counts_mt &lt;= 20)].copy()
+
+# Doublets (run per sample)
+sc.pp.scrublet(adata)
+# -&gt; adata.obs[&quot;doublet_score&quot;], adata.obs[&quot;predicted_doublet&quot;]
+adata = adata[~adata.obs.predicted_doublet].copy()
+
+# Keep raw counts before any transformation
+adata.layers[&quot;counts&quot;] = adata.X.copy()</code></pre>
+<p><strong>Be careful with in-place transformations.</strong> Many functions modify the object in place. Re-running a notebook cell can, for example, log-transform the data twice without any warning. Some tools expect raw integer counts and others expect log-normalized values. So always know what is currently in <code>adata.X</code>, and keep raw counts in a layer.</p>
+<h2 id="12-key-points-and-glossary">12. Key points and glossary</h2>
+<ol>
+<li>Single-cell matrices are sparse: only a minority of each cell's mRNA is captured, and most entries are zero.</li>
+<li>QC of the count matrix removes empty droplets, damaged cells and doublets, in that order.</li>
+<li>Empty droplets separate from cells by UMIs and, even better, by genes per barcode. The knee plot shows the same thing; EmptyDrops (built into Cell Ranger) tests uncertain barcodes against the ambient profile. Still check the filtered distributions yourself.</li>
+<li>A high mitochondrial fraction marks damaged cells; thresholds depend on the dataset and tissue.</li>
+<li>Doublets can create fake cell types. Scrublet finds cells resembling simulated doublets; run it per sample and check its threshold.</li>
+<li>Thresholds are tools, not laws: choose them by looking at the data, and check that conclusions are robust.</li>
+<li>AnnData keeps X, obs, var, obsm, layers and uns aligned. Use sparse matrices and categorical columns to save memory, and keep raw counts in a layer.</li>
+</ol>
+<div class="table-wrap"><table>
+<thead><tr>
+<th>Term</th>
+<th>Meaning</th>
+</tr></thead><tbody>
+<tr><td>Raw / filtered matrix</td><td>All barcodes / only barcodes called as cells</td></tr>
+<tr><td>Ambient RNA</td><td>Free RNA from lysed cells present in every droplet</td></tr>
+<tr><td>Knee (barcode rank) plot</td><td>UMIs per barcode vs barcode rank, log–log</td></tr>
+<tr><td>EmptyDrops</td><td>Test of whether a barcode's profile differs from the ambient profile</td></tr>
+<tr><td>Mitochondrial fraction</td><td>Share of a cell's UMIs from mitochondrial genes; high in damaged cells</td></tr>
+<tr><td>Doublet score</td><td>Scrublet's measure of similarity to simulated doublets</td></tr>
+<tr><td>Q30</td><td>Base quality ≥ 30, i.e. error probability ≤ 0.1%</td></tr>
+<tr><td>AnnData</td><td>Python container for an annotated matrix (X, obs, var, obsm, layers, uns)</td></tr>
+<tr><td>HDF5 / .h5 / .h5ad</td><td>Hierarchical binary format; Cell Ranger matrix file; saved AnnData object</td></tr>
+<tr><td>Sparse matrix (CSR/CSC)</td><td>Storage of only non-zero values; row- or column-oriented</td></tr>
+<tr><td>Categorical variable</td><td>Column storing repeated labels once, with integer codes per row</td></tr>
+<tr><td>scverse</td><td>Ecosystem of Python single-cell tools built around AnnData and scanpy</td></tr>
+</tbody></table></div>
+<h2 id="further-reading">Further reading</h2>
+<ul>
+<li><a href="https://scanpy.readthedocs.io" rel="noopener">scanpy documentation and tutorials</a></li>
+<li><a href="https://anndata.readthedocs.io" rel="noopener">anndata documentation</a></li>
+<li><a href="https://scverse.org/packages/" rel="noopener">scverse ecosystem</a></li>
+<li><a href="https://doi.org/10.1186/s13059-019-1662-y" rel="noopener">Lun et al., 2019 — EmptyDrops</a></li>
+<li><a href="https://doi.org/10.1016/j.cels.2018.11.005" rel="noopener">Wolock et al., 2019 — Scrublet</a></li>
+</ul>
+  </div></main>
+  <footer class="bottom">
+    <p>© 2026 Sergey Isaev. Updated <time datetime="2026-11-21">21 November 2026</time>.</p>
+  </footer>
+</body>
+</html>
