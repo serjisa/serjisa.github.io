@@ -1,0 +1,324 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Lecture 1 | Sergey Isaev</title>
+  <meta name="description" content="Sergey Isaev — computational biologist working on single-cell genomics and lineage tracing at the Medical University of Vienna">
+  <link rel="canonical" href="https://isaev.cc/bf.msu.2026/lecture1/">
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="Lecture 1 | Sergey Isaev">
+  <meta property="og:description" content="Sergey Isaev — computational biologist working on single-cell genomics and lineage tracing at the Medical University of Vienna">
+  <meta property="og:url" content="https://isaev.cc/bf.msu.2026/lecture1/">
+  <meta property="og:image" content="https://isaev.cc/assets/img/portrait.webp">
+  <meta name="color-scheme" content="light dark">
+  <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#1c1c1d" media="(prefers-color-scheme: dark)">
+  <link rel="icon" href="/favicon-32.png" sizes="32x32" type="image/png">
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+  <link rel="stylesheet" href="/assets/css/site.css?v=1795613548">
+</head>
+<body class="page">
+  <a class="skip" href="#main">Skip to content</a>
+  <header class="top">
+    <a class="brand" href="/">sergey <b>isaev</b></a>
+    <nav aria-label="Main">
+      <a href="/publications/">publications</a>
+      <a href="/code/">code</a>
+      <a href="/assets/pdf/cv.pdf">cv</a>
+    </nav>
+  </header>
+  <main id="main"><div class="inner">
+<h1>Lecture 1. Transcriptomics, Illumina sequencing and bulk RNA-seq library preparation</h1>
+<p>This is the first lecture of the single-cell transcriptomics course. It covers what RNA-seq measures, how Illumina sequencing works, and how a bulk RNA-seq library is made from tissue. Single-cell library preparation is the topic of Lecture 2; data analysis starts in Lecture 3.</p>
+<h2 id="1-what-transcriptomics-is">1. What transcriptomics is</h2>
+<p>The word "transcriptomics" is used in two senses; this course is about the second one.</p>
+<ol>
+<li><strong>Which transcripts an organism has.</strong> The goal is to learn RNA sequences, assemble a transcriptome, find genes, proteins and homologs. This is how poorly studied organisms without a good reference genome are approached.</li>
+<li><strong>How strongly each gene is expressed.</strong> The genes are already known (for humans there is a telomere-to-telomere genome assembly), and the question is which of them are active in a given tissue and at what level. When people say "transcriptomics" without qualification, they usually mean this.</li>
+</ol>
+<p><strong>Example of the first kind — the supergroup Provora</strong> (Nature, 2022; authors include K. Mikhailov and V. Aleoshin, Belozersky Institute, Moscow State University). The authors sequenced transcriptomes of poorly characterized single-celled eukaryotes. Phylogenetic analysis showed they form a separate clade, distant from known groups. Such protists are hard to grow in large numbers, so very sensitive methods are needed, down to single-cell transcriptomics.</p>
+<p>Transcriptome assembly and assessment of its completeness (BUSCO and similar tools) are outside the scope of this course.</p>
+<h2 id="2-why-we-measure-rna-rather-than-protein">2. Why we measure RNA rather than protein</h2>
+<p>Most often what we really care about is protein levels, but we measure RNA because it is cheaper and far more sensitive. This section explains why expression is worth measuring at all, why RNA is used instead of protein, and how far RNA can be trusted as a proxy.</p>
+<p><strong>Why expression matters at all.</strong> Knowing which genes are active helps to understand how diseases develop, find therapeutic targets and characterize unknown cell populations. A clinical example is immunohistochemical staining for PD-L1 in non-small cell lung cancer. In patients without targetable driver mutations, high PD-L1 often means first-line monotherapy with a PD-1/PD-L1 inhibitor. With low PD-L1, immunotherapy is usually combined with chemotherapy. When a driver mutation is present (EGFR, ALK and others), targeted therapy comes first.</p>
+<p><strong>Why not protein mass spectrometry.</strong> The issue is less accuracy than sensitivity. Unlike nucleic acids, proteins cannot be amplified, so mass spectrometry needs more input, measurements are noisier and fewer proteins are covered. In practice, in proteomics and metabolomics you may expect hundreds of proteins to change, yet only a handful reach statistical significance.</p>
+<p><strong>How well RNA predicts protein.</strong> Using RNA as a proxy assumes that RNA and protein levels are correlated. This is only partly true, and it depends on what exactly is compared.</p>
+<ul>
+<li><strong>Across genes within one tissue.</strong> Take one tissue (e.g., brain) and, for every gene, compare its RNA level with its protein level. The correlation is clear but far from perfect. (Such plots contain thousands of overlapping points, so they are best drawn as 2D histograms, where colour shows point density.)</li>
+<li><strong>For one gene across tissues.</strong> Now take a single gene, measure it in several tissues (e.g., 8) and correlate its RNA and protein levels across them; repeat for every gene. The median correlation is only about 0.35, with a wide spread: some genes correlate strongly, others are close to zero.</li>
+<li><strong>Why some genes show near-zero correlation.</strong> These are often housekeeping genes with nearly constant expression. If a feature barely changes between tissues, only noise remains, and two independent noises are uncorrelated. Genes that differ strongly between tissues correlate much better.</li>
+</ul>
+<p><strong>RNA and protein are shifted in time.</strong> Protein accumulates with a delay of the order of hours after the RNA.</p>
+<ul>
+<li>In slow processes (many tumours develop over years) the state can be treated as roughly steady.</li>
+<li>In fast processes the delay is critical. In mouse embryos the morphology changes within a day (around E8–E9: neural tube closure, neural crest migration), so 6 hours is a lot.</li>
+<li>A practical trap: embryos in one litter are not fertilized at exactly the same time and can differ in stage by up to half a day. A perturbation (any intervention: a compound, a knockout, a knockdown) applied "at E7" may in fact hit different stages.</li>
+</ul>
+<p>There are also questions where RNA itself is the target: non-coding RNAs, transcription and post-transcriptional regulation. Then RNA-seq answers the question directly.</p>
+<h2 id="3-old-generation-vs-next-generation-sequencing">3. Old-generation vs next-generation sequencing</h2>
+<p>To measure RNA at scale, we convert it to DNA and sequence it. Before looking at how this is done, it helps to place modern sequencing in context. The key difference between the two generations is parallelism: NGS reads millions to billions of different molecules at once, Sanger sequencing reads one target per reaction. "Next generation" has long stopped being new, but the term stuck.</p>
+<div class="table-wrap"><table>
+<thead><tr>
+<th></th>
+<th>Sanger (old generation)</th>
+<th>NGS (Illumina and others)</th>
+</tr></thead><tbody>
+<tr><td>Molecules per run</td><td>One target per reaction</td><td>Millions to billions of fragments</td></tr>
+<tr><td>Typical tasks</td><td>Checking a plasmid before cloning, testing for a mutation in one known gene</td><td>Open-ended questions: whole genomes, transcriptomes, ChIP-seq</td></tr>
+<tr><td>When to choose</td><td>A clear hypothesis about a specific region</td><td>You want as much data as possible without a prior hypothesis</td></tr>
+</tbody></table></div>
+<p>"Old" does not mean "worse": for targeted tasks Sanger is cheaper and still the standard.</p>
+<h2 id="4-how-illumina-sequencing-works">4. How Illumina sequencing works</h2>
+<p>An Illumina sequencer is essentially a fluorescence microscope with microfluidics: on every cycle it photographs which base was added in each of millions of clusters. Below is a simplified scheme; modern instruments (NovaSeq) use more complex flow cells and amplification, but the logic is the same.</p>
+<h3 id="41-flow-cell-and-library">4.1. Flow cell and library</h3>
+<ul>
+<li><strong>Flow cell</strong> — a glass slide with channels called lanes: 1, 2, 4 or 8 depending on the type. The surface of each lane is coated with oligonucleotides of two known sequences (P5 and P7). This is why flow cells are expensive.</li>
+<li>It is called a <em>flow</em> cell because a series of reagents constantly flows through it.</li>
+<li><strong>Library</strong> — a mixture of <strong>DNA</strong> molecules (not RNA) with a common architecture: the insert you want to read in the middle (a genome fragment, cDNA, a ChIP-seq region), technical sequences at both ends.</li>
+<li>Each technical end consists of three parts: a region complementary to the flow-cell oligos (P5/P7), an <strong>index</strong> (i5/i7), and a binding site for the sequencing primer.</li>
+</ul>
+<h3 id="42-bridge-amplification-from-one-molecule-to-a-cluster">4.2. Bridge amplification: from one molecule to a cluster</h3>
+<ol>
+<li>Single-stranded library molecules hybridize to the flow-cell oligos by either end. The concentration is chosen so that molecules land sparsely — ideally one per spot.</li>
+<li>The flow-cell oligo acts as a primer; polymerase synthesizes the complementary strand, which is now <strong>covalently attached</strong> to the flow cell.</li>
+<li>The free end of the strand bends over and hybridizes to a neighbouring oligo, forming a "bridge", and synthesis continues from it.</li>
+<li>After tens of cycles a <strong>cluster</strong> forms around the original molecule — thousands of its copies. The copies cannot drift away because all of them are attached to the surface.</li>
+</ol>
+<p><strong>Why a cluster is needed.</strong> The signal from a single fluorophore is too weak for the Illumina detector. Thousands of identical copies lighting up in the same colour at the same spot give a readable signal. The alternative — detectors sensitive enough for single molecules, as in PacBio — is a different approach at a different cost.</p>
+<h3 id="43-linearization">4.3. Linearization</h3>
+<p>After amplification a cluster contains both strands (forward and reverse), but only one orientation can be read at a time. One of the two flow-cell oligo types carries a modified nucleotide. It is cleaved specifically (enzymatically or chemically), and all strands attached through it are washed away. An ordinary restriction enzyme would not work here: the molecules are single-stranded and their insert sequences differ. The flow cell is then washed free of leftover reagents.</p>
+<h3 id="44-sequencing-by-synthesis-sbs-with-reversible-terminators">4.4. Sequencing by synthesis (SBS) with reversible terminators</h3>
+<p>Each base of a read is a separate cycle of four steps:</p>
+<ol>
+<li><strong>Incorporate.</strong> A sequencing primer binds the molecule. Polymerase and nucleotides carrying a fluorophore and a <strong>reversible terminator</strong> are added: exactly one base is incorporated, and synthesis cannot continue.</li>
+<li><strong>Wash.</strong> Unincorporated labelled nucleotides are removed, otherwise everything would glow.</li>
+<li><strong>Image.</strong> A laser excites the fluorophores, and a camera records the colour of each cluster.</li>
+<li><strong>Cleave</strong> the terminator and fluorophore chemically, then move on to the next cycle.</li>
+</ol>
+<p>The number of cycles is set at the start of the run; it determines read length and run time.</p>
+<p>How bases are encoded depends on the instrument. Older systems (HiSeq 2500, the original MiSeq) use four dyes, one per base. NovaSeq, NextSeq and MiSeq i100 use <strong>two-channel</strong> chemistry: one base lights up in both channels, two bases in one channel each, and G is dark. As a result, an empty or failed cluster is read as G, which produces artificial poly-G tails in reads that should be trimmed.</p>
+<h3 id="45-from-images-to-files">4.5. From images to files</h3>
+<ul>
+<li>The raw data are images from every cycle, hundreds of gigabytes. They are processed on the instrument and usually not stored.</li>
+<li><strong>Base calling</strong> converts intensities into bases and quality scores. The output is <strong>BCL files</strong> (base call): binary, organized by cycle, not yet reads.</li>
+<li>Conversion BCL → <strong>FASTQ</strong> (bcl2fastq / BCL Convert) assembles reads and at the same time performs <strong>demultiplexing</strong> by index (Section 5). FASTQ is what you will work with.</li>
+<li>Each lane produces its own set of FASTQ files. So a facility may give you, for example, 4 R1 files and 4 R2 files per sample. These are not technical replicates but different lanes; they are almost always simply merged.</li>
+</ul>
+<div class="table-wrap"><table>
+<thead><tr>
+<th>Flow cell (examples)</th>
+<th>Lanes</th>
+</tr></thead><tbody>
+<tr><td>MiSeq</td><td>1</td></tr>
+<tr><td>NovaSeq 6000 SP / S1 / S2</td><td>2</td></tr>
+<tr><td>NovaSeq 6000 S4, NextSeq 500/550</td><td>4</td></tr>
+<tr><td>HiSeq (high output), NovaSeq X 10B / 25B</td><td>8</td></tr>
+</tbody></table></div>
+<h2 id="5-indexes-and-multiplexing">5. Indexes and multiplexing</h2>
+<p>Indexes make it possible to sequence many libraries on one flow cell and then assign each read to its sample.</p>
+<p><strong>Why.</strong> One Illumina run yields hundreds of millions to billions of reads, while a single sample usually needs far fewer. So libraries from different experiments and labs are pooled and sequenced together.</p>
+<p><strong>How.</strong> An index is a short sequence (usually 8–10 nucleotides) added during library preparation. The P5/P7 adapters are identical for all libraries, while the index is unique to each library. Indexes are read in separate phases of the run, each from its own primer.</p>
+<p><strong>Read order in a paired-end run:</strong></p>
+<ol>
+<li><strong>Read 1 (R1)</strong> — the insert from one end.</li>
+<li><strong>Index 1 (I1, i7)</strong> — from the same strand, with a new primer.</li>
+<li><strong>Turnaround.</strong> Another round of bridge synthesis regenerates the second strand; <strong>Index 2 (I2, i5)</strong> is read at this stage. Strands attached through the other oligo are then cleaved off.</li>
+<li><strong>Read 2 (R2)</strong> — the insert from the opposite end.</li>
+</ol>
+<p>In total, the facility has four data streams: R1, R2, I1, I2. You normally receive only R1/R2: after demultiplexing all of your reads carry the same indexes, so I1/I2 files add nothing. If you do receive I1/I2 files, these are the indexes.</p>
+<h3 id="index-hopping-and-unique-dual-indexes-udi">Index hopping and unique dual indexes (UDI)</h3>
+<p><strong>Index hopping</strong> means that some reads end up with another library's index and are assigned to the wrong sample. The main cause is free (unligated) adapters and primers in the pooled library: they prime other library molecules and extend them with their own index. It is most noticeable on patterned flow cells with ExAmp amplification (HiSeq 4000/X, NovaSeq). According to Illumina, typical rates are 0.1–2%.</p>
+<p><strong>When it matters.</strong> For expression this fraction is usually lost in the noise; for detecting rare variants it is not. Example: patient A's biopsy has 20% purity (fraction of tumour cells) and a heterozygous mutation, so only ~10% of reads carry it. Sample B, sequenced in the same pool, has 100% purity and a different homozygous mutation. Hopped reads from B can create a false mutation in A at a frequency comparable to real ones.</p>
+<p><strong>Two ways to use two indexes.</strong> <em>Combinatorial</em> dual indexing was introduced to increase the number of samples per run: e.g., 12 i7 × 8 i5 = 96 combinations. It does not protect against hopping, because a hopped read often lands on another valid combination. <em>Unique dual indexes (UDI)</em> give each library its own i7 <strong>and</strong> i5, neither of which is reused by any other library in the pool. A read is assigned to a sample only if both indexes match; an unexpected pair is discarded. For a read to land in the wrong sample, both indexes would have to hop in a coordinated way, which is orders of magnitude rarer. UDIs became the recommended practice after patterned flow cells appeared (~2017).</p>
+<h2 id="6-read-length-and-paired-end-sequencing">6. Read length and paired-end sequencing</h2>
+<p>Illumina reads are short — typically 2×150 nucleotides on NovaSeq (up to 2×250 on some flow cells) and up to 2×300 on MiSeq. Base quality drops toward the end of a read.</p>
+<p><strong>Why reads can't be longer (phasing).</strong> On every cycle, in a small fraction of molecules in a cluster a base fails to incorporate, and these molecules fall one position behind (phasing). Sometimes the terminator fails and a molecule jumps ahead (pre-phasing). Errors accumulate: the cluster no longer lights up in a single colour, and the signal becomes a mixture. Washing is also imperfect, so background builds up on the flow cell. That is why the base caller's confidence decreases with read length.</p>
+<p><strong>Why read a molecule from both ends (paired-end):</strong></p>
+<ul>
+<li><strong>Insert longer than two reads.</strong> We don't know the middle, but we know that the two ends came from one molecule at a known distance. This improves mapping in repeats, helps link exons and detect structural variants and fusions.</li>
+<li><strong>Insert shorter than two reads.</strong> R1 and R2 overlap: the low-quality end of one read falls on the high-quality start of the other, and the sequence can be corrected.</li>
+</ul>
+<h2 id="7-bulk-rna-seq-library-preparation-the-roadmap">7. Bulk RNA-seq library preparation: the roadmap</h2>
+<p>The goal is to turn RNA from tissue into short DNA molecules with Illumina adapters while preserving the relative abundance of transcripts. <em>Bulk</em> means RNA is extracted from a whole piece of tissue, not from individual cells.</p>
+<ol>
+<li><strong>Sample storage</strong>, <strong>total RNA extraction</strong> and integrity check.</li>
+<li><strong>Selecting the transcripts of interest</strong>: poly(A) selection or rRNA depletion.</li>
+<li><strong>Fragmentation</strong> — before or after reverse transcription, depending on the protocol.</li>
+<li><strong>Reverse transcription</strong> (RNA → cDNA) and <strong>second-strand synthesis</strong> (→ double-stranded DNA).</li>
+<li><strong>Adapter and index addition</strong>, PCR amplification of the library.</li>
+<li><strong>Sequencing.</strong></li>
+</ol>
+<p>This lecture stays at the conceptual level; the technical details of single-cell libraries are covered in Lecture 2.</p>
+<h2 id="8-sample-storage-and-rna-quality">8. Sample storage and RNA quality</h2>
+<p>RNases are everywhere, so the main goal is to stop degradation quickly. Ideally RNA is extracted straight from fresh tissue, but usually days or weeks pass between surgery and extraction.</p>
+<div class="table-wrap"><table>
+<thead><tr>
+<th>Method</th>
+<th>What is done</th>
+<th>RNA</th>
+<th>Where it is used</th>
+</tr></thead><tbody>
+<tr><td><strong>FFPE</strong> (formalin-fixed paraffin-embedded)</td><td>Fixation in formalin, water replaced by paraffin; thin sections are cut from the block and stained (H&amp;E, IHC)</td><td>Heavily fragmented and chemically modified; DNA survives better</td><td>Histopathology; blocks are kept for decades</td></tr>
+<tr><td><strong>Fresh frozen / snap frozen</strong></td><td>Instant freezing in liquid nitrogen (−196 °C), storage at −80 °C</td><td>Best quality</td><td>Molecular studies, biobanks</td></tr>
+<tr><td><strong>RNAlater</strong></td><td>Tissue is submerged in a high-salt stabilizing solution that inactivates RNases</td><td>Good, within the storage limits: 1 day at 37 °C, 1 week at 25 °C, 1 month at 4 °C; long term at −20 °C or below</td><td>Field work, transport without liquid nitrogen</td></tr>
+</tbody></table></div>
+<p><strong>Freeze fast.</strong> Slow freezing forms ice crystals that damage the tissue and the molecules in it.</p>
+<h3 id="rin-rna-integrity-before-sequencing">RIN — RNA integrity before sequencing</h3>
+<ul>
+<li>Total RNA is separated by <strong>length</strong> with capillary electrophoresis (Agilent Bioanalyzer, TapeStation), producing an electropherogram.</li>
+<li>The two main peaks are ribosomal 18S and 28S: rRNA makes up most of total RNA. When RNA degrades, the peaks smear out and the fraction of short fragments grows.</li>
+<li><strong>RIN (RNA Integrity Number)</strong> ranges from 1 (fully degraded) to 10 (intact); the algorithm is trained on features of the electropherogram. Poly(A) protocols usually require RIN ≥ 7–8.</li>
+<li>For FFPE, RIN is almost always low and uninformative; <strong>DV200</strong> — the fraction of fragments longer than 200 nucleotides — is used instead.</li>
+</ul>
+<h3 id="tin-integrity-estimated-from-sequenced-reads">TIN — integrity estimated from sequenced reads</h3>
+<p>Bioinformaticians are often not given the RIN, but quality can be estimated from how evenly reads cover genes. <strong>TIN (Transcript Integrity Number</strong>, RSeQC) is computed for each transcript. Often it is enough simply to look at the 5′→3′ gene-body coverage profile.</p>
+<p><strong>Why degradation causes 3′ bias.</strong> In a degraded sample (RNases, heat, formalin) RNA breaks at random positions along its whole length. Poly(A) selection (or reverse transcription primed with oligo-dT) then captures only fragments still attached to the poly(A) tail, i.e. 3′ ends. 5′ pieces separated from the tail are lost. With rRNA depletion and random priming, coverage of degraded RNA stays much more uniform.</p>
+<ul>
+<li>In practice: 3′-biased coverage in a poly(A) library is a typical sign of degradation.</li>
+<li>The exception is protocols where 3′ bias is built in by design (3′-tag methods, most single-cell protocols). There, uneven coverage says nothing about quality.</li>
+</ul>
+<p><strong>About the poly(A) tail.</strong> The tail is not encoded in the genome: the gene contains only a polyadenylation signal, and poly(A) polymerase adds the tail after the pre-mRNA is cleaved. In mammals a newly made tail is about 150–250 nucleotides long and shortens over time.</p>
+<h2 id="9-getting-rid-of-ribosomal-rna">9. Getting rid of ribosomal RNA</h2>
+<p>Ribosomal RNA is about 80% of total RNA. If it is not removed, most of the sequencing budget goes to useless reads. There are two opposite approaches: pull out what you need, or remove what you don't.</p>
+<h3 id="91-polya-selection-the-most-common-approach">9.1. Poly(A) selection (the most common approach)</h3>
+<ul>
+<li>mRNAs and many long non-coding RNAs carry a poly(A) tail; rRNA, tRNA and most small RNAs do not. Polyadenylation is mostly a feature of RNA polymerase II transcripts.</li>
+<li>Magnetic beads with attached oligo-dT (particles with a superparamagnetic iron-oxide core) are added to the RNA. Poly(A) tails hybridize to the oligo-dT.</li>
+<li>A magnet holds the beads; the supernatant with rRNA and small RNAs is discarded. The mRNA is then released from the beads by heating.</li>
+<li>Side effect: enrichment for mature mRNA. Polyadenylated molecules are mostly already spliced, so there are fewer intronic reads than with rRNA depletion (where immature pre-mRNA also enters the library).</li>
+</ul>
+<h3 id="92-rrna-depletion-total-rna-seq">9.2. rRNA depletion (total RNA-seq)</h3>
+<p>Used when non-polyadenylated RNAs are of interest or when the RNA is degraded.</p>
+<ul>
+<li><strong>RNase H (e.g., Ribo-Zero Plus).</strong> DNA probes complementary to rRNA form DNA:RNA hybrids with it. RNase H cuts RNA only within such hybrids; DNase then removes the probes. The rest of the RNA is untouched.</li>
+<li><strong>Capture (original Ribo-Zero).</strong> Biotinylated probes bind rRNA, and the complexes are removed with streptavidin beads. RNA without rRNA remains in solution.</li>
+</ul>
+<h3 id="93-different-protocol-different-data">9.3. Different protocol — different data</h3>
+<div class="table-wrap"><table>
+<thead><tr>
+<th></th>
+<th>Poly(A) selection</th>
+<th>rRNA depletion (total)</th>
+</tr></thead><tbody>
+<tr><td>What enters the library</td><td>Mature mRNAs, polyadenylated lncRNAs</td><td>Everything except rRNA, including pre-mRNA and non-polyadenylated RNAs</td></tr>
+<tr><td>Intronic reads</td><td>Few</td><td>Many</td></tr>
+<tr><td>Examples seen only in total</td><td>—</td><td>Replication-dependent histone mRNAs (a stem-loop instead of poly(A), no introns); MALAT1 and NEAT1 (3′ end protected by a triple helix instead of poly(A))</td></tr>
+<tr><td>Degraded RNA</td><td>Strong 3′ bias</td><td>Works much better</td></tr>
+<tr><td>Cost and simplicity</td><td>Cheaper, standard for good-quality RNA</td><td>More expensive, some rRNA remains</td></tr>
+</tbody></table></div>
+<p><strong>Protocol batch effect.</strong> The choice between the two methods leaves a strong mark on the data. For example, when colon and blood samples are each processed in several replicates with both methods, the two tissues separate, but within each tissue the samples clearly group by protocol. If cohort A was prepared with one method and cohort B with another, differences between them cannot be separated from the artifact. Rule: storage, extraction, library preparation and, where possible, the site should be the same for all samples being compared.</p>
+<h3 id="94-exon-capture-for-ffpe">9.4. Exon capture for FFPE</h3>
+<p>For FFPE samples neither approach above works well. A third option uses the same logic as exome sequencing: probes against exons pull out the fragments of interest, and the <strong>bound</strong> molecules are sequenced. This works even for heavily fragmented RNA, where poly(A) selection recovers only 3′ pieces. In FFPE data, samples prepared with exon capture cluster by biology again, while after poly(A) selection they mostly do not.</p>
+<h2 id="10-fragmentation-reverse-transcription-and-adapters">10. Fragmentation, reverse transcription and adapters</h2>
+<p><strong>Why fragment.</strong> The insert can be longer than two reads (typically 200–500 nt), but not many times longer. A very long molecule amplifies poorly on the flow cell: it forms bridges less efficiently, and its cluster spreads out and overlaps with neighbours. mRNAs, on the other hand, are thousands of nucleotides long.</p>
+<p><strong>How to fragment.</strong> In standard kits (TruSeq, KAPA) RNA is fragmented with divalent cations (Mg²⁺) at elevated temperature. Double-stranded DNA is fragmented by sonication, enzymes or Tn5 transposase (tagmentation).</p>
+<h3 id="reverse-transcription-how-to-prime-it">Reverse transcription: how to prime it</h3>
+<p>Reverse transcriptase is an RNA-dependent DNA polymerase. Like any DNA polymerase, it needs a primer. Since we want to read all transcripts at once, the primer must be universal.</p>
+<div class="table-wrap"><table>
+<thead><tr>
+<th></th>
+<th>Oligo-dT primer</th>
+<th>Random hexamers</th>
+</tr></thead><tbody>
+<tr><td>Where it binds</td><td>To the poly(A) tail (with an anchor nucleotide at the end so that it sits right at the tail boundary)</td><td>At random positions along the whole length</td></tr>
+<tr><td>When fragmentation happens</td><td>After RT: otherwise only fragments carrying the tail would be used</td><td>Before RT</td></tr>
+<tr><td>Coverage</td><td>Biased toward the 3′ end</td><td>More uniform (with a small bias from hexamer composition)</td></tr>
+<tr><td>Where it is used</td><td>Most single-cell protocols, 3′-tag methods</td><td>Standard bulk RNA-seq</td></tr>
+</tbody></table></div>
+<p><strong>Why oligo-dT gives 3′ bias.</strong> Reverse transcriptase does not always reach the 5′ end: its processivity is limited and it stalls at RNA secondary structure. So cDNA covers the 3′ part of the transcript more often. This distorts the relationship "gene length → number of reads", which ideally is linear. With random priming it is closer to linear, which makes normalization simpler.</p>
+<h3 id="from-cdna-to-the-final-library">From cDNA to the final library</h3>
+<p>The typical sequence of steps after first-strand synthesis (TruSeq-like kits):</p>
+<ol>
+<li><strong>Second-strand synthesis</strong> — the RNA:cDNA hybrid is turned into double-stranded DNA. In stranded protocols dUTP is incorporated instead of dTTP (Section 11).</li>
+<li><strong>End repair and A-tailing</strong> — a single A is added to the 3′ ends.</li>
+<li><strong>Adapter ligation</strong> — adapters with a T overhang are ligated to the double-stranded fragments.</li>
+<li><strong>PCR</strong> with primers carrying the indexes and P5/P7 sequences. This is where PCR duplicates arise.</li>
+<li><strong>Clean-up</strong> to remove free adapters and adapter dimers (also important for index hopping), and size check.</li>
+</ol>
+<h2 id="11-special-protocols">11. Special protocols</h2>
+<h3 id="111-cap-based-selection-and-cage">11.1. Cap-based selection and CAGE</h3>
+<p>RNA polymerase II transcripts carry a cap at the 5′ end; it is added co-transcriptionally, a few tens of nucleotides after initiation. The cap can be chemically tagged and pulled down:</p>
+<ul>
+<li><strong>Why in general.</strong> To select full-length molecules that reach the 5′ end (more on this in Lecture 2).</li>
+<li><strong>CAGE (Cap Analysis of Gene Expression).</strong> The cap is biotinylated, capped molecules are captured with streptavidin, and a short stretch right at the 5′ end is sequenced. This maps <strong>transcription start sites (TSS)</strong> at single-nucleotide resolution. Measuring expression by counting 5′ ends is the basis of the FANTOM project.</li>
+</ul>
+<p><strong>Finding enhancers with CAGE.</strong> An enhancer is a regulatory DNA region located at a distance from a gene and bound by transcription factors. At active enhancers RNA polymerase II itself initiates transcription, usually <strong>in both directions</strong>. This produces enhancer RNAs (eRNAs): short, unstable, capped and usually not polyadenylated. Therefore:</p>
+<ul>
+<li>they are nearly absent from poly(A) libraries;</li>
+<li>in CAGE they appear as a <strong>pair of divergent TSS peaks</strong> on opposite strands, away from annotated genes. FANTOM5 used this signature to build an atlas of tens of thousands of enhancers (<a href="https://pmc.ncbi.nlm.nih.gov/articles/5215096" rel="noopener">Andersson et al., 2014</a>).</li>
+</ul>
+<p>Whether eRNAs themselves have a function, or are a by-product of open chromatin, is still debated.</p>
+<h3 id="112-stranded-libraries">11.2. Stranded libraries</h3>
+<p>In an unstranded library it is unknown which genomic strand the original RNA was transcribed from: a read maps to "+" or "−" with equal probability. In a stranded protocol (the most common is <strong>dUTP</strong>) the second strand is marked with uracil and is not amplified. As a result, R1 always has the same orientation relative to the original RNA. Stranded kits are the default for bulk RNA-seq today (Illumina Stranded mRNA/Total, NEBNext Directional, KAPA).</p>
+<p><strong>Why it matters:</strong></p>
+<ul>
+<li>Overlapping genes on opposite strands are common. In GENCODE 19 about 19% of genes (~11,000) overlap a gene on the other strand, especially antisense lncRNAs. Without strand information, reads in such loci are ambiguous (<a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC4559181" rel="noopener">Zhao et al., 2015</a>).</li>
+<li>In the same study, comparing stranded and unstranded libraries from the same blood samples gave 1,751 "differentially expressed" genes — a purely technical effect.</li>
+<li>For bioinformaticians: when counting reads, the correct strandedness must be specified (e.g., <code>-s</code> in featureCounts, <code>libType</code> in Salmon). Getting it wrong can lose most of the counts.</li>
+</ul>
+<h2 id="12-sequencing-platforms">12. Sequencing platforms</h2>
+<div class="table-wrap"><table>
+<thead><tr>
+<th>Platform</th>
+<th>Principle</th>
+<th>Role in transcriptomics</th>
+</tr></thead><tbody>
+<tr><td><strong>Illumina NovaSeq</strong> (6000, X)</td><td>Bridge/ExAmp amplification + SBS</td><td>Main workhorse of large facilities, highest throughput</td></tr>
+<tr><td><strong>Illumina NextSeq / MiSeq</strong></td><td>Same</td><td>Cheaper and smaller; typical for small institutes and clinics</td></tr>
+<tr><td><strong>MGI / BGI (DNBSEQ)</strong></td><td>DNA nanoballs: rolling-circle amplification of a circularized library in solution, no PCR on the flow cell; fluorescent readout</td><td>Similar data to Illumina, lower index hopping; Illumina libraries need conversion before loading; widely used in Russia and China</td></tr>
+<tr><td><strong>Oxford Nanopore</strong></td><td>Change in ionic current as a single molecule passes through a pore</td><td>Direct RNA sequencing without RT: RNA modifications (e.g., m6A) are visible; long reads for isoforms</td></tr>
+<tr><td><strong>PacBio</strong></td><td>Single molecules, highly sensitive fluorescence detector</td><td>Long accurate reads of full-length transcripts (Iso-Seq)</td></tr>
+</tbody></table></div>
+<p><strong>Why long reads.</strong> Short reads don't show which exons were on the same molecule. If one read falls in exon 1 and another in exon 3, you cannot tell whether they came from an isoform that skips exon 2. A long read covers the whole isoform.</p>
+<h2 id="13-key-points-and-glossary">13. Key points and glossary</h2>
+<ol>
+<li>RNA-seq measures RNA as an accessible proxy for protein. Correlation with protein is moderate, and protein lags behind in time.</li>
+<li>Illumina reads clusters of identical molecules one base per cycle. Clusters are needed for a strong signal; phasing limits read length.</li>
+<li>Up to four sequences are read from one molecule: R1, I1, I2, R2. Unique dual indexes protect against index hopping.</li>
+<li>Storage method and RNA integrity (RIN, TIN) directly affect the data. Degradation plus poly(A) selection gives 3′ bias.</li>
+<li>Poly(A) selection and rRNA depletion yield different sets of transcripts. Only samples prepared the same way can be compared.</li>
+<li>The RT priming strategy (oligo-dT or random primers) determines the coverage profile and when fragmentation happens.</li>
+<li>Before any analysis, find out whether the library is stranded and which protocol was used.</li>
+</ol>
+<div class="table-wrap"><table>
+<thead><tr>
+<th>Term</th>
+<th>Meaning</th>
+</tr></thead><tbody>
+<tr><td>Bulk RNA-seq</td><td>RNA-seq of a whole piece of tissue, without separating cells</td></tr>
+<tr><td>Flow cell, lane</td><td>The sequencing slide and its independent channels</td></tr>
+<tr><td>Cluster</td><td>Thousands of copies of one library molecule at one spot on the flow cell</td></tr>
+<tr><td>SBS</td><td>Sequencing by synthesis with reversible terminators</td></tr>
+<tr><td>Base calling, BCL, FASTQ</td><td>Converting signal into bases; binary per-cycle files; text files of reads with quality scores</td></tr>
+<tr><td>Index (i7, i5)</td><td>Short library barcode used for multiplexing</td></tr>
+<tr><td>Demultiplexing</td><td>Assigning reads to samples by their indexes</td></tr>
+<tr><td>Index hopping, UDI</td><td>A read acquiring another library's index; protection by unique index pairs</td></tr>
+<tr><td>Phasing</td><td>Loss of synchrony between molecules in a cluster; lowers quality toward the end of a read</td></tr>
+<tr><td>Paired-end</td><td>Reading the insert from both ends</td></tr>
+<tr><td>FFPE, fresh frozen</td><td>Formalin fixation and paraffin embedding; rapid freezing</td></tr>
+<tr><td>RIN, DV200, TIN</td><td>RNA integrity: from electrophoresis, fraction of fragments &gt;200 nt, from read coverage</td></tr>
+<tr><td>Poly(A) selection, rRNA depletion</td><td>Pulling out mRNA with oligo-dT; removing rRNA with probes</td></tr>
+<tr><td>Oligo-dT / random hexamers</td><td>Two ways to prime reverse transcription</td></tr>
+<tr><td>Stranded (dUTP)</td><td>A library that preserves the strand of origin</td></tr>
+<tr><td>CAGE, TSS, eRNA</td><td>Sequencing 5′ ends of capped RNAs; transcription start site; enhancer RNA</td></tr>
+<tr><td>Perturbation</td><td>Any experimental intervention: a compound, a knockout, a knockdown</td></tr>
+</tbody></table></div>
+<h2 id="further-reading">Further reading</h2>
+<ul>
+<li><a href="https://www.illumina.com/techniques/sequencing/ngs-library-prep/multiplexing/index-hopping.html" rel="noopener">Illumina: Index hopping</a></li>
+<li><a href="https://support-docs.illumina.com/SHARE/IndexAdaptersPooling/Content/SequencingChemistry.htm" rel="noopener">Illumina: Sequencing chemistry (1-, 2-, 4-channel)</a></li>
+<li><a href="https://knowledge.illumina.com/library-preparation/rna-library-prep/library-preparation-rna-library-prep-troubleshooting-list/000002731" rel="noopener">Illumina: Impact of RNA degradation on mRNA-seq data</a></li>
+<li><a href="https://support.illumina.com/content/dam/illumina-support/documents/documentation/chemistry_documentation/illumina_prep/RNA/illumina-stranded-mrna-reference-guide-1000000124518-02.pdf" rel="noopener">Illumina Stranded mRNA Prep Reference Guide</a></li>
+<li><a href="https://www.thermofisher.com/order/catalog/product/AM7020/faqs" rel="noopener">Thermo Fisher: RNAlater FAQ</a></li>
+<li><a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC4559181" rel="noopener">Zhao et al., 2015 — stranded vs non-stranded RNA-seq</a></li>
+<li><a href="https://pmc.ncbi.nlm.nih.gov/articles/5215096" rel="noopener">Andersson et al., 2014 — FANTOM5 enhancer atlas</a></li>
+<li><a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC6416933" rel="noopener">MGI DNBSEQ: DNA nanoballs and index mis-assignment</a></li>
+</ul>
+  </div></main>
+  <footer class="bottom">
+    <p>© 2026 Sergey Isaev. Updated <time datetime="2026-11-25">25 November 2026</time>.</p>
+  </footer>
+</body>
+</html>
